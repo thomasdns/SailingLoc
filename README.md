@@ -56,7 +56,7 @@ cloner le repo : git clone https://github.com/nom-utilisateur/sailingloc.git
 cd /backend
 créer un fichier .env
 PORT=port
-MONGODB_URI=your_mongo_connection_string
+MONGO_URI=your_mongo_connection_string
 JWT_SECRET=your_jwt_secret
 
 
