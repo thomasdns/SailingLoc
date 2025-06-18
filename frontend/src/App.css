@@ -1,42 +1,185 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* Reset et styles de base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #003366 0%, #0099cc 100%);
+  min-height: 100vh;
+}
+
+.app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Styles pour la page d'accueil */
+.home-container {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.home-content {
   text-align: center;
+  max-width: 800px;
+  color: white;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.home-content h1 {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-@keyframes logo-spin {
+.home-subtitle {
+  font-size: 1.3rem;
+  margin-bottom: 40px;
+  opacity: 0.9;
+  font-weight: 300;
+}
+
+.home-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 60px;
+  flex-wrap: wrap;
+}
+
+.home-button {
+  padding: 15px 30px;
+  border: none;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.home-button.primary {
+  background: linear-gradient(135deg, #f38541 0%, #983c02 100%);
+  color: white;
+  box-shadow: 0 8px 25px rgba(243, 133, 65, 0.3);
+}
+
+.home-button.primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(243, 133, 65, 0.4);
+}
+
+.home-button.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.home-button.secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(255, 255, 255, 0.1);
+}
+
+.home-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.feature {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 30px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.feature:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.feature h3 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.feature p {
+  font-size: 1rem;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+/* Animation d'entrée pour la page d'accueil */
+@keyframes fadeInUp {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: translateY(30px);
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+.home-content {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .home-content h1 {
+    font-size: 2.5rem;
+  }
+
+  .home-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .home-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .home-button {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .home-features {
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
 }
 
-.card {
-  padding: 2em;
-}
+@media (max-width: 480px) {
+  .home-content h1 {
+    font-size: 2rem;
+  }
 
-.read-the-docs {
-  color: #888;
+  .home-subtitle {
+    font-size: 1rem;
+  }
+
+  .feature {
+    padding: 20px;
+  }
+
+  .feature h3 {
+    font-size: 1.3rem;
+  }
 }
