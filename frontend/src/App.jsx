@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Login from "./components/Login";
+import Register from "./components/Register";
 import "./App.css";
 
 function App() {
@@ -9,6 +10,8 @@ function App() {
     switch (currentPage) {
       case "login":
         return <Login onBack={() => setCurrentPage("home")} />;
+      case "register":
+        return <Register onBack={() => setCurrentPage("home")} />;
       default:
         return (
           <div className="home-container">
@@ -25,7 +28,13 @@ function App() {
                 >
                   Se connecter
                 </button>
-                <button className="home-button secondary">
+                <button 
+                  className="home-button secondary"
+                  onClick={() => setCurrentPage("register")}
+                >
+                  S'inscrire
+                </button>
+                <button className="home-button tertiary">
                   En savoir plus
                 </button>
               </div>

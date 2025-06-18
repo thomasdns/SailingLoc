@@ -106,7 +106,7 @@ function Login({ onBack }) {
               Mot de passe oublié ?
             </a>
             <p className="signup-link">
-              Pas encore de compte ? <a href="#">S'inscrire</a>
+              Pas encore de compte ? <a href="#" onClick={() => window.location.reload()}>S'inscrire</a>
             </p>
           </div>
         </div>

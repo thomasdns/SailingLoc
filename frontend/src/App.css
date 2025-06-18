@@ -90,6 +90,19 @@ body {
   box-shadow: 0 12px 35px rgba(255, 255, 255, 0.1);
 }
 
+.home-button.tertiary {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.home-button.tertiary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(255, 255, 255, 0.05);
+}
+
 .home-features {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
