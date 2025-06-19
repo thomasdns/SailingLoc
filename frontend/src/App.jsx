@@ -1,35 +1,65 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from "react";
+import Login from "./components/Login";
+import Register from "./components/Register";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [currentPage, setCurrentPage] = useState("home");
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+  const renderPage = () => {
+    switch (currentPage) {
+      case "login":
+        return <Login onBack={() => setCurrentPage("home")} />;
+      case "register":
+        return <Register onBack={() => setCurrentPage("home")} />;
+      default:
+        return (
+          <div className="home-container">
+            <div className="home-content">
+              <h1>Bienvenue sur SailingLoc</h1>
+              <p className="home-subtitle">
+                Votre application de localisation maritime
+              </p>
+
+              <div className="home-buttons">
+                <button
+                  className="home-button primary"
+                  onClick={() => setCurrentPage("login")}
+                >
+                  Se connecter
+                </button>
+                <button 
+                  className="home-button secondary"
+                  onClick={() => setCurrentPage("register")}
+                >
+                  S'inscrire
+                </button>
+                <button className="home-button tertiary">
+                  En savoir plus
+                </button>
+              </div>
+
+              <div className="home-features">
+                <div className="feature">
+                  <h3>🚢 Navigation</h3>
+                  <p>Suivez vos bateaux en temps réel</p>
+                </div>
+                <div className="feature">
+                  <h3>📍 Localisation</h3>
+                  <p>Géolocalisation précise de votre flotte</p>
+                </div>
+                <div className="feature">
+                  <h3>📊 Analytics</h3>
+                  <p>Analyses détaillées de vos trajets</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return <div className="app">{renderPage()}</div>;
 }
 
-export default App
+export default App;
