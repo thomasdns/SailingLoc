@@ -1,5 +1,4 @@
 import React from "react";
-import Header from "../components/header";
 import Hero from "../components/Hero";
 import BoatCard from "../components/BoatCard";
 import ReviewCard from "../components/ReviewCard";
@@ -77,7 +76,6 @@ const Home = () => {
 
   return (
     <div className="app">
-      <Header />
       <Hero />
 
       {/* Section Best Sellers */}

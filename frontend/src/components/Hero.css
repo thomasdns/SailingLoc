@@ -24,8 +24,10 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(30, 58, 138, 0.6);
+  background: linear-gradient(to top, #0f78a0, #bd7851);
 }
+
+
 
 .hero-content {
   position: relative;

@@ -1,6 +1,7 @@
 import React from "react";
 import boatLogo from "../assets/boatNameTextColorLogo_color.png";
 import "./header.css";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   return (
@@ -11,18 +12,12 @@ const Header = () => {
             <img src={boatLogo} alt="SailingLoc" className="logo-image" />
           </div>
           <nav className="nav">
-            <a href="#accueil" className="nav-link">
-              Accueil
-            </a>
+            <Link to="/" className="nav-link">Accueil</Link>
             <a href="#bateau" className="nav-link">
               Bateau
             </a>
-            <a href="#apropos" className="nav-link">
-              À propos
-            </a>
-            <a href="#contact" className="nav-link">
-              Contact
-            </a>
+            <Link to="/about" className="nav-link">À propos</Link>
+            <Link to="/contact" className="nav-link">Contact</Link>
           </nav>
           <button className="login-btn">CONNEXION</button>
         </div>
