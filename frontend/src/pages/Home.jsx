@@ -1,10 +1,11 @@
 import React from "react";
 import Header from "../components/header";
-import Hero from "../components/Hero";
+import SearchFilters from "../components/SearchFilters";
 import BoatCard from "../components/BoatCard";
 import ReviewCard from "../components/ReviewCard";
 import DestinationCard from "../components/DestinationCard";
 import Footer from "../components/Footer";
+import "./Home.css";
 import "../App.css";
 
 const Home = () => {
@@ -78,7 +79,24 @@ const Home = () => {
   return (
     <div className="app">
       <Header />
-      <Hero />
+
+      {/* Hero avec SearchFilter intégré */}
+      <section className="hero">
+        <div className="hero-background">
+          <div className="hero-overlay"></div>
+        </div>
+        <div className="hero-content">
+          <h1 className="hero-title">
+            SAILINGLOC<span className="text-orange">.</span>
+          </h1>
+          <p className="hero-subtitle">
+            Location de bateaux entre particuliers pour des expériences uniques
+          </p>
+
+          {/* SearchFilters intégré */}
+          <SearchFilters />
+        </div>
+      </section>
 
       {/* Section Best Sellers */}
       <section className="section section-white">
