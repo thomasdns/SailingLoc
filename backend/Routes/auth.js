@@ -1,6 +1,8 @@
-import router from 'express';
+import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+
+const router = Router();
 
 // Register
 router.post('/register', async (req, res) => {
@@ -27,9 +29,9 @@ router.post('/register', async (req, res) => {
 
     // Create token
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE }
+      { userId: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: process.env.JWT_EXPIRE || '24h' }
     );
 
     res.status(201).json({
@@ -68,9 +70,9 @@ router.post('/login', async (req, res) => {
 
     // Create token
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE }
+      { userId: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: process.env.JWT_EXPIRE || '24h' }
     );
 
     res.json({
