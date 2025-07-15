@@ -41,6 +41,16 @@ const Home = () => {
       image:
         "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     },
+    {
+      id: 4,
+      model: "Modèle1",
+      location: "Ville",
+      capacity: 15,
+      price: 800,
+      rating: 4.8,
+      image:
+        "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    },
   ];
 
   const reviews = [
@@ -107,7 +117,7 @@ const Home = () => {
             nos clients !
           </h2>
           <div className="boats-grid">
-            {boats.map((boat) => (
+            {boats.slice(0, 3).map((boat) => (
               <BoatCard key={boat.id} boat={boat} />
             ))}
           </div>
@@ -126,7 +136,7 @@ const Home = () => {
             <span className="text-blue">expérience</span> en mer.
           </h2>
           <div className="reviews-grid">
-            {reviews.map((review) => (
+            {reviews.slice(0, 4).map((review) => (
               <ReviewCard key={review.id} review={review} />
             ))}
           </div>
