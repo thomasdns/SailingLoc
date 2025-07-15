@@ -1,4 +1,6 @@
 import aproposImg from "../assets/apropos.png";
+import Header from "../components/header";
+import Footer from "../components/Footer";
 
 const sidebarData = [
   { icon: "👥", text: "Plus de 1 100 000 membres" },
@@ -9,6 +11,7 @@ const sidebarData = [
 
 const About = () => (
   <div style={{ minHeight: '80vh', background: 'var(--color-gray-50)' }}>
+    <Header />
     <div style={{
       display: 'flex',
       flexDirection: 'row',
@@ -68,6 +71,7 @@ const About = () => (
         ))}
       </div>
     </div>
+    <Footer />
   </div>
 );
 

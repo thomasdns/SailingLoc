@@ -1,9 +1,11 @@
 import React from "react";
-import Hero from "../components/Hero";
+import Header from "../components/header";
+import SearchFilters from "../components/SearchFilters";
 import BoatCard from "../components/BoatCard";
 import ReviewCard from "../components/ReviewCard";
 import DestinationCard from "../components/DestinationCard";
 import Footer from "../components/Footer";
+import "./Home.css";
 import "../App.css";
 
 const Home = () => {
@@ -31,6 +33,16 @@ const Home = () => {
     },
     {
       id: 3,
+      model: "Modèle1",
+      location: "Ville",
+      capacity: 15,
+      price: 800,
+      rating: 4.8,
+      image:
+        "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    },
+    {
+      id: 4,
       model: "Modèle1",
       location: "Ville",
       capacity: 15,
@@ -76,7 +88,25 @@ const Home = () => {
 
   return (
     <div className="app">
-      <Hero />
+      <Header />
+
+      {/* Hero avec SearchFilter intégré */}
+      <section className="hero">
+        <div className="hero-background">
+          <div className="hero-overlay"></div>
+        </div>
+        <div className="hero-content">
+          <h1 className="hero-title">
+            SAILINGLOC<span className="text-orange">.</span>
+          </h1>
+          <p className="hero-subtitle">
+            Location de bateaux entre particuliers pour des expériences uniques
+          </p>
+
+          {/* SearchFilters intégré */}
+          <SearchFilters />
+        </div>
+      </section>
 
       {/* Section Best Sellers */}
       <section className="section section-white">
@@ -87,7 +117,7 @@ const Home = () => {
             nos clients !
           </h2>
           <div className="boats-grid">
-            {boats.map((boat) => (
+            {boats.slice(0, 3).map((boat) => (
               <BoatCard key={boat.id} boat={boat} />
             ))}
           </div>
@@ -106,7 +136,7 @@ const Home = () => {
             <span className="text-blue">expérience</span> en mer.
           </h2>
           <div className="reviews-grid">
-            {reviews.map((review) => (
+            {reviews.slice(0, 4).map((review) => (
               <ReviewCard key={review.id} review={review} />
             ))}
           </div>

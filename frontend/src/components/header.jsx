@@ -12,12 +12,18 @@ const Header = () => {
             <img src={boatLogo} alt="SailingLoc" className="logo-image" />
           </div>
           <nav className="nav">
-            <Link to="/" className="nav-link">Accueil</Link>
-            <a href="#bateau" className="nav-link">
+            <Link to="/" className="nav-link">
+              Accueil
+            </Link>
+            <Link to="/bateaux" className="nav-link">
               Bateau
-            </a>
-            <Link to="/about" className="nav-link">À propos</Link>
-            <Link to="/contact" className="nav-link">Contact</Link>
+            </Link>
+            <Link to="/about" className="nav-link">
+              À propos
+            </Link>
+            <Link to="/contact" className="nav-link">
+              Contact
+            </Link>
           </nav>
           <button className="login-btn">CONNEXION</button>
         </div>

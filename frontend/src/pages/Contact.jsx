@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import Header from "../components/header";
+import Footer from "../components/Footer";
 
 const Contact = () => {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
@@ -16,6 +18,7 @@ const Contact = () => {
 
   return (
     <div className="contact-page" style={{ minHeight: '80vh', background: 'var(--color-gray-50)' }}>
+      <Header />
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '4rem 0' }}>
         <form onSubmit={handleSubmit} style={{
           background: 'var(--color-white)',
@@ -104,6 +107,7 @@ const Contact = () => {
           )}
         </form>
       </div>
+      <Footer />
     </div>
   );
 };

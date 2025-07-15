@@ -16,6 +16,7 @@
   min-width: 10rem;
   appearance: none;
   font-size: 1rem;
+  font-family: "Nunito", sans-serif; /* Ajout de la police */
 }
 
 .filter-select:focus,
@@ -28,6 +29,7 @@
 .filter-select option {
   background-color: var(--color-gray-800);
   color: var(--color-white);
+  font-family: "Nunito", sans-serif; /* Ajout de la police */
 }
 
 .filter-input::placeholder {
@@ -44,6 +46,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 1rem;
+  font-family: "Nunito", sans-serif; /* Ajout de la police */
 }
 
 .search-btn:hover {
