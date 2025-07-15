@@ -9,6 +9,11 @@ router.post('/register', async (req, res) => {
   try {
     // Extract data from request body
     const { email, password, nom, prenom, tel } = req.body;
+    
+    // Validation du numéro de téléphone
+    if (typeof tel !== 'string' || !/^[0-9]{10}$/.test(tel) || !isNaN(Number(nom))) {
+      return res.status(400).json({ message: 'Le champ tel doit contenir exactement 10 chiffres (0-9), sans espaces ni caractères spéciaux. Ce champ doit etre une chaine de caractères.' });
+    }
 
     // Check if user already exists with this email
     let user = await User.findOne({ email });
