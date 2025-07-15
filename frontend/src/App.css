@@ -1,3 +1,34 @@
+/* Variables globales */
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap");
+:root {
+  --color-orange: #f97316;
+  --color-orange-hover: #ea580c;
+  --color-blue: #1d4ed8;
+  --color-blue-dark: #1e3a8a;
+  --color-amber: #92400e;
+  --color-amber-hover: #78350f;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-white: #ffffff;
+  --color-yellow: #fbbf24;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 1rem;
+  --border-radius-xl: 1.5rem;
+  --border-radius-full: 9999px;
+}
+
 /* Reset et styles de base */
 * {
   margin: 0;
@@ -6,193 +37,149 @@
 }
 
 body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #003366 0%, #0099cc 100%);
-  min-height: 100vh;
+  font-family: "Nunito", sans-serif;
+  line-height: 1.6;
+  color: var(--color-gray-900);
 }
 
 .app {
-  width: 100%;
   min-height: 100vh;
+  background-color: var(--color-gray-100);
 }
 
-/* Styles pour la page d'accueil */
-.home-container {
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+/* Layout */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
-.home-content {
+.section {
+  padding: 5rem 0;
+}
+
+.section-white {
+  background-color: var(--color-white);
+}
+
+.section-gray {
+  background-color: var(--color-gray-50);
+}
+
+.text-center {
   text-align: center;
-  max-width: 800px;
-  color: white;
 }
 
-.home-content h1 {
-  font-size: 3.5rem;
+/* Typographie */
+.section-title {
+  font-size: 2.25rem;
   font-weight: 700;
-  margin-bottom: 20px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  margin-bottom: 4rem;
+  color: var(--color-gray-800);
 }
 
-.home-subtitle {
-  font-size: 1.3rem;
-  margin-bottom: 40px;
-  opacity: 0.9;
-  font-weight: 300;
+.text-orange {
+  color: var(--color-orange);
 }
 
-.home-buttons {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  margin-bottom: 60px;
-  flex-wrap: wrap;
+.text-blue {
+  color: var(--color-blue);
 }
 
-.home-button {
-  padding: 15px 30px;
+/* Boutons */
+.btn {
+  padding: 0.75rem 2rem;
+  border-radius: var(--border-radius-full);
+  font-weight: 700;
+  text-decoration: none;
   border: none;
-  border-radius: 50px;
-  font-size: 1.1rem;
-  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  text-decoration: none;
   display: inline-block;
 }
 
-.home-button.primary {
-  background: linear-gradient(135deg, #f38541 0%, #983c02 100%);
-  color: white;
-  box-shadow: 0 8px 25px rgba(243, 133, 65, 0.3);
+.btn:hover {
+  transform: translateY(-2px);
 }
 
-.home-button.primary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 35px rgba(243, 133, 65, 0.4);
+.btn-outline {
+  border: 2px solid var(--color-blue);
+  color: var(--color-blue);
+  background-color: transparent;
 }
 
-.home-button.secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
+.btn-outline:hover {
+  background-color: var(--color-blue);
+  color: var(--color-white);
 }
 
-.home-button.secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-3px);
-  box-shadow: 0 12px 35px rgba(255, 255, 255, 0.1);
+.btn-amber {
+  background-color: var(--color-amber);
+  color: var(--color-white);
+  padding: 1rem 2.5rem;
+  font-size: 1.125rem;
 }
 
-.home-button.tertiary {
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
+.btn-amber:hover {
+  background-color: var(--color-amber-hover);
 }
 
-.home-button.tertiary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-3px);
-  box-shadow: 0 12px 35px rgba(255, 255, 255, 0.05);
+/* Grilles */
+.boats-grid {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
 }
 
-.home-features {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 30px;
-  margin-top: 40px;
+.reviews-grid {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
 }
 
-.feature {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 30px;
-  border-radius: 20px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+.destinations-grid {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
 }
 
-.feature:hover {
-  transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+/* Section propriétaire */
+.owner-section {
+  text-align: center;
 }
 
-.feature h3 {
-  font-size: 1.5rem;
-  margin-bottom: 15px;
-  font-weight: 600;
+.owner-description {
+  font-size: 1.25rem;
+  color: var(--color-gray-600);
+  margin-bottom: 2.5rem;
+  line-height: 1.8;
+  max-width: 56rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.feature p {
-  font-size: 1rem;
-  opacity: 0.9;
-  line-height: 1.6;
-}
-
-/* Animation d'entrée pour la page d'accueil */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.home-content {
-  animation: fadeInUp 0.8s ease-out;
-}
-
-/* Responsive design */
+/* Responsive */
 @media (max-width: 768px) {
-  .home-content h1 {
-    font-size: 2.5rem;
+  .section-title {
+    font-size: 1.875rem;
   }
 
-  .home-subtitle {
-    font-size: 1.1rem;
+  .boats-grid,
+  .reviews-grid,
+  .destinations-grid {
+    gap: 1rem;
   }
 
-  .home-buttons {
-    flex-direction: column;
-    align-items: center;
+  .container {
+    padding: 0 0.5rem;
   }
 
-  .home-button {
-    width: 100%;
-    max-width: 300px;
-  }
-
-  .home-features {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-}
-
-@media (max-width: 480px) {
-  .home-content h1 {
-    font-size: 2rem;
-  }
-
-  .home-subtitle {
-    font-size: 1rem;
-  }
-
-  .feature {
-    padding: 20px;
-  }
-
-  .feature h3 {
-    font-size: 1.3rem;
+  .owner-description {
+    font-size: 1.125rem;
   }
 }
