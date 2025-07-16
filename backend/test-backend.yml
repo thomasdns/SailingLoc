@@ -1,0 +1,28 @@
+config:
+  target: "http://localhost:3001"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+  http:
+    timeout: 30
+  defaults:
+    headers:
+      Content-Type: "application/json"
+scenarios:
+  - flow:
+      - post:
+          url: "/api/auth/register"
+          json:
+            email: "testuser_{{ $uuid }}@example.com"
+            password: "motdepasse"
+            nom: "Dupont"
+            prenom: "Jean"
+            tel: "0612345678"
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "testuser_{{ $uuid }}@example.com"
+            password: "motdepasse"
+      - get:
+          url: "/" 
+         
