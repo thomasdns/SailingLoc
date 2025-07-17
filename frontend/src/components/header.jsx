@@ -16,7 +16,7 @@ const Header = () => {
               Accueil
             </Link>
             <Link to="/bateaux" className="nav-link">
-              Bateau
+              Bateaux
             </Link>
             <Link to="/about" className="nav-link">
               À propos
@@ -25,7 +25,9 @@ const Header = () => {
               Contact
             </Link>
           </nav>
-          <button className="login-btn">CONNEXION</button>
+          <Link to="/login" className="nav-link">
+            <button className="login-btn">CONNEXION</button>
+          </Link>
         </div>
       </div>
     </header>
