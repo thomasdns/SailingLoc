@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import "./Register.css";
+import "./register.css";
+import { Link } from "react-router-dom";
 
-function Register({ onBack }) {
+function Register() {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -13,7 +14,14 @@ function Register({ onBack }) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    role: "",
+    password: "",
+    confirmPassword: "",
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -21,7 +29,6 @@ function Register({ onBack }) {
       ...prev,
       [name]: value,
     }));
-    // Effacer l'erreur du champ modifié
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -40,57 +47,46 @@ function Register({ onBack }) {
 
   const validateForm = () => {
     const newErrors = {};
-
     if (!formData.firstName.trim()) {
       newErrors.firstName = "Le prénom est requis";
     }
-
     if (!formData.lastName.trim()) {
       newErrors.lastName = "Le nom est requis";
     }
-
     if (!formData.email.trim()) {
       newErrors.email = "L'email est requis";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "L'email n'est pas valide";
     }
-
     if (!formData.role) {
       newErrors.role = "Le rôle est requis";
     }
-
     if (!formData.password) {
       newErrors.password = "Le mot de passe est requis";
     } else if (formData.password.length < 6) {
-      newErrors.password = "Le mot de passe doit contenir au moins 6 caractères";
+      newErrors.password =
+        "Le mot de passe doit contenir au moins 6 caractères";
     }
-
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = "La confirmation du mot de passe est requise";
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!validateForm()) {
       return;
     }
-
     setIsLoading(true);
-
-    // Simulation d'une requête d'inscription
     try {
       console.log("Tentative d'inscription avec:", formData);
-      // Ici vous pourriez ajouter votre logique d'inscription
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulation d'un délai
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       alert("Inscription réussie! Vous pouvez maintenant vous connecter.");
-      onBack(); // Retour à la page d'accueil
+      window.location.href = "/login";
     } catch {
       alert("Erreur lors de l'inscription");
     } finally {
@@ -102,17 +98,20 @@ function Register({ onBack }) {
     <div className="app">
       <div className="register-container">
         <div className="register-card">
-          <button
-            className="back-button"
-            onClick={onBack}
-            aria-label="Retour à l'accueil"
-          >
-            ← Retour
-          </button>
-
+          <div style={{ position: "absolute", top: 20, left: 20 }}>
+            <Link
+              to="/"
+              style={{
+                color: "#0099cc",
+                textDecoration: "none",
+                fontWeight: 500,
+              }}
+            >
+              Accueil
+            </Link>
+          </div>
           <h1>Inscription</h1>
           <p className="subtitle">Créez votre compte SailingLoc</p>
-
           <form onSubmit={handleSubmit} className="register-form">
             <div className="form-row">
               <div className="form-group">
@@ -131,7 +130,6 @@ function Register({ onBack }) {
                   <span className="error-message">{errors.firstName}</span>
                 )}
               </div>
-
               <div className="form-group">
                 <label htmlFor="lastName">Nom</label>
                 <input
@@ -149,7 +147,6 @@ function Register({ onBack }) {
                 )}
               </div>
             </div>
-
             <div className="form-group">
               <label htmlFor="email">Adresse email</label>
               <input
@@ -166,7 +163,6 @@ function Register({ onBack }) {
                 <span className="error-message">{errors.email}</span>
               )}
             </div>
-
             <div className="form-group">
               <label htmlFor="role">Rôle</label>
               <select
@@ -185,7 +181,6 @@ function Register({ onBack }) {
                 <span className="error-message">{errors.role}</span>
               )}
             </div>
-
             <div className="form-group">
               <label htmlFor="password">Mot de passe</label>
               <div className="password-input-container">
@@ -197,7 +192,9 @@ function Register({ onBack }) {
                   onChange={handleChange}
                   placeholder="Votre mot de passe"
                   required
-                  className={`form-input password-input ${errors.password ? "error" : ""}`}
+                  className={`form-input password-input ${
+                    errors.password ? "error" : ""
+                  }`}
                 />
                 <button
                   type="button"
@@ -216,7 +213,6 @@ function Register({ onBack }) {
                 <span className="error-message">{errors.password}</span>
               )}
             </div>
-
             <div className="form-group">
               <label htmlFor="confirmPassword">Confirmer le mot de passe</label>
               <div className="password-input-container">
@@ -228,7 +224,9 @@ function Register({ onBack }) {
                   onChange={handleChange}
                   placeholder="Confirmez votre mot de passe"
                   required
-                  className={`form-input password-input ${errors.confirmPassword ? "error" : ""}`}
+                  className={`form-input password-input ${
+                    errors.confirmPassword ? "error" : ""
+                  }`}
                 />
                 <button
                   type="button"
@@ -247,15 +245,17 @@ function Register({ onBack }) {
                 <span className="error-message">{errors.confirmPassword}</span>
               )}
             </div>
-
-            <button type="submit" className="register-button" disabled={isLoading}>
+            <button
+              type="submit"
+              className="register-button"
+              disabled={isLoading}
+            >
               {isLoading ? "Inscription..." : "S'inscrire"}
             </button>
           </form>
-
           <div className="form-footer">
             <p className="login-link">
-              Déjà un compte ? <a href="#" onClick={() => window.location.reload()}>Se connecter</a>
+              Déja un compte ? <Link to="/login">S'inscrire</Link>
             </p>
           </div>
         </div>
@@ -264,4 +264,4 @@ function Register({ onBack }) {
   );
 }
 
-export default Register; 
+export default Register;

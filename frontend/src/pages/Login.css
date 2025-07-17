@@ -1,34 +1,13 @@
-/* Reset et styles de base */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+.login-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(135deg, #003366 0%, #0099cc 100%);
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.app {
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.register-container {
-  width: 100%;
-  max-width: 500px;
-}
-
-.register-card {
+.login-card {
   background: white;
   border-radius: 20px;
   padding: 40px;
@@ -36,6 +15,11 @@ body {
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
+  min-width: 420px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 /* Bouton retour */
@@ -68,7 +52,7 @@ body {
   color: #003366;
 }
 
-.register-card h1 {
+.login-card h1 {
   color: #333;
   font-size: 28px;
   font-weight: 600;
@@ -84,17 +68,10 @@ body {
   font-size: 14px;
 }
 
-.register-form {
+.login-form {
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-/* Disposition en colonnes pour prénom et nom */
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
 }
 
 .form-group {
@@ -128,40 +105,6 @@ body {
 
 .form-input::placeholder {
   color: #999;
-}
-
-/* Styles pour le select */
-.form-input select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
-  padding-right: 40px;
-}
-
-.form-input select:focus {
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230099cc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-}
-
-/* Styles pour les erreurs */
-.form-input.error {
-  border-color: #e74c3c;
-  background: #fdf2f2;
-}
-
-.form-input.error:focus {
-  border-color: #e74c3c;
-  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
-}
-
-.error-message {
-  color: #e74c3c;
-  font-size: 12px;
-  font-weight: 500;
-  margin-top: 4px;
 }
 
 /* Styles pour le conteneur du mot de passe */
@@ -202,7 +145,7 @@ body {
   color: #0099cc;
 }
 
-.register-button {
+.login-button {
   background: linear-gradient(135deg, #f38541 0%, #983c02 100%);
   color: white;
   border: none;
@@ -215,12 +158,12 @@ body {
   margin-top: 10px;
 }
 
-.register-button:hover:not(:disabled) {
+.login-button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 20px #983b0280;
 }
 
-.register-button:disabled {
+.login-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
   transform: none;
@@ -231,44 +174,56 @@ body {
   text-align: center;
 }
 
-.login-link {
+.forgot-password {
+  color: #0099cc;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.forgot-password:hover {
+  color: #003366;
+}
+
+.signup-link {
+  margin-top: 15px;
   color: #666;
   font-size: 14px;
 }
 
-.login-link a {
+.signup-link a {
   color: #0099cc;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
 }
 
-.login-link a:hover {
+.signup-link a:hover {
   color: #003366;
-  text-decoration: underline;
 }
 
 /* Responsive design */
 @media (max-width: 480px) {
-  .register-card {
+  .login-card {
     padding: 30px 20px;
+    margin: 10px;
   }
 
   .back-button {
     top: 15px;
     left: 15px;
-    font-size: 12px;
+    font-size: 13px;
     padding: 6px 10px;
   }
 
-  .register-card h1 {
+  .login-card h1 {
     font-size: 24px;
     margin-top: 15px;
   }
 
   .form-input {
     padding: 10px 14px;
-    font-size: 13px;
   }
 
   .password-input {
@@ -276,23 +231,16 @@ body {
   }
 
   .password-toggle {
-    right: 10px;
+    right: 8px;
     font-size: 16px;
   }
 
-  .register-button {
+  .login-button {
     padding: 12px;
-    font-size: 15px;
-  }
-
-  /* En mobile, on passe en colonne unique */
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 20px;
   }
 }
 
-/* Animation d'apparition */
+/* Animation d'entrée */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -304,6 +252,6 @@ body {
   }
 }
 
-.register-card {
+.login-card {
   animation: fadeInUp 0.6s ease-out;
-} 
+}

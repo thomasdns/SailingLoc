@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import "./Login.css";
+import { Link } from "react-router-dom";
 
-function Login({ onBack }) {
+function Login() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -24,12 +25,9 @@ function Login({ onBack }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
-    // Simulation d'une requête de connexion
     try {
       console.log("Tentative de connexion avec:", formData);
-      // Ici vous pourriez ajouter votre logique de connexion
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulation d'un délai
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       alert("Connexion réussie!");
     } catch {
       alert("Erreur de connexion");
@@ -42,17 +40,20 @@ function Login({ onBack }) {
     <div className="app">
       <div className="login-container">
         <div className="login-card">
-          <button
-            className="back-button"
-            onClick={onBack}
-            aria-label="Retour à l'accueil"
-          >
-            ← Retour
-          </button>
-
+          <div style={{ position: "absolute", top: 20, left: 20 }}>
+            <Link
+              to="/"
+              style={{
+                color: "#0099cc",
+                textDecoration: "none",
+                fontWeight: 500,
+              }}
+            >
+              Accueil
+            </Link>
+          </div>
           <h1>Connexion</h1>
           <p className="subtitle">Connectez-vous à votre compte</p>
-
           <form onSubmit={handleSubmit} className="login-form">
             <div className="form-group">
               <label htmlFor="email">Adresse email</label>
@@ -67,7 +68,6 @@ function Login({ onBack }) {
                 className="form-input"
               />
             </div>
-
             <div className="form-group">
               <label htmlFor="password">Mot de passe</label>
               <div className="password-input-container">
@@ -95,18 +95,13 @@ function Login({ onBack }) {
                 </button>
               </div>
             </div>
-
             <button type="submit" className="login-button" disabled={isLoading}>
               {isLoading ? "Connexion..." : "Se connecter"}
             </button>
           </form>
-
           <div className="form-footer">
-            <a href="#" className="forgot-password">
-              Mot de passe oublié ?
-            </a>
             <p className="signup-link">
-              Pas encore de compte ? <a href="#" onClick={() => window.location.reload()}>S'inscrire</a>
+              Pas encore de compte ? <Link to="/register">S'inscrire</Link>
             </p>
           </div>
         </div>

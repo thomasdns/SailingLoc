@@ -5,6 +5,8 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Bateaux from "./pages/Bateaux";
 import CGU_CGV from "./pages/CGU_CGV";
+import Login from "./pages/login";
+import Register from "./pages/register";
 import PolitiqueConfidentialite from "./pages/PolitiqueConfidentialite";
 
 function ScrollToTop() {
@@ -24,6 +26,8 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/bateaux" element={<Bateaux />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/cgu-cgv" element={<CGU_CGV />} />
         <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
       </Routes>

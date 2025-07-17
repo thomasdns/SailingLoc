@@ -5,6 +5,7 @@ import BoatCard from "../components/BoatCard";
 import ReviewCard from "../components/ReviewCard";
 import DestinationCard from "../components/DestinationCard";
 import Footer from "../components/Footer";
+import { Link } from "react-router-dom";
 import "./Home.css";
 import "../App.css";
 
@@ -122,7 +123,9 @@ const Home = () => {
             ))}
           </div>
           <div className="text-center">
-            <button className="btn btn-outline">Voir plus</button>
+            <Link to="/bateaux">
+              <button className="btn btn-outline">Voir plus</button>
+            </Link>
           </div>
         </div>
       </section>
@@ -168,7 +171,9 @@ const Home = () => {
             Faites-le naviguer même sans vous et générez des revenus en le
             mettant en location.
           </p>
-          <button className="btn btn-amber">👤 S'INSCRIRE</button>
+          <Link to="/register">
+            <button className="btn btn-amber">S'INSCRIRE</button>
+          </Link>
         </div>
       </section>
 
