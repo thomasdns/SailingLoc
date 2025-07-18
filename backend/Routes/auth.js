@@ -10,6 +10,14 @@ router.post('/register', async (req, res) => {
     // Extract data from request body
     const { email, password, nom, prenom, tel } = req.body;
     
+    // Validation du mot de passe fort
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        message: "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial."
+      });
+    }
+
     // Validation du numéro de téléphone
     if (typeof tel !== 'string' || !/^[0-9]{10}$/.test(tel) || !isNaN(Number(nom))) {
       return res.status(400).json({ message: 'Le champ tel doit contenir exactement 10 chiffres (0-9), sans espaces ni caractères spéciaux. Ce champ doit etre une chaine de caractères.' });
