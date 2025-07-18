@@ -1,5 +1,6 @@
 import React from 'react';
 import { Ship, Shield, CreditCard, Users, MapPin, Clock } from 'lucide-react';
+import AproposImg from '../../assets/apropos.png';
 
 export default function About() {
   const pillars = [
@@ -48,26 +49,29 @@ export default function About() {
             <div>
               <div className="bg-blue-900 text-white p-8 rounded-2xl">
                 <h2 className="text-3xl font-bold mb-6">À PROPOS</h2>
-                <p className="text-blue-100 mb-6 leading-relaxed">
-                  Chez SailingLoc, nous croyons que la navigation doit être accessible, 
-                  simple et sécurisée pour tous. Notre mission est de démocratiser l'accès 
-                  aux plaisirs de la mer en proposant une plateforme moderne et fiable de 
-                  location de bateaux.
+                <p style={{ fontSize: '1.1rem', color: 'var(--color-gray-800)', marginBottom: '1.5rem' }}>
+                  SailingLoc est une start-up innovante fondée par M. Voisin, spécialisée dans la mise en relation pour la location de voiliers et de bateaux à moteur. Basée à La Rochelle (Charente-Maritime), SailingLoc propose une plateforme collaborative, sécurisée et centrée sur l’expérience utilisateur.<br /><br />
+                  Notre service s’adresse aussi bien aux passionnés de navigation qu’aux vacanciers occasionnels, en facilitant la location de bateaux auprès de particuliers ou de professionnels partout en Europe. Que ce soit pour une sortie en mer, une croisière en famille, entre amis ou en couple, SailingLoc vous invite à vivre des aventures maritimes authentiques et inoubliables.
                 </p>
-                <p className="text-blue-100 mb-6 leading-relaxed">
-                  Depuis notre création, nous nous efforçons de connecter les passionnés de mer 
-                  avec des propriétaires de bateaux soigneusement sélectionnés, garantissant 
-                  ainsi des expériences nautiques exceptionnelles le long des côtes bretonnes.
-                </p>
-                <button className="bg-orange-500 text-white px-8 py-3 rounded-full font-medium hover:bg-orange-600 transition-colors">
-                  En savoir plus
-                </button>
+                <h2 className="text-orange-500 text-[1.3rem] mb-4 font-bold">Informations légales</h2>
+                <ul style={{ fontSize: '1.08rem', color: 'var(--color-gray-800)', listStyle: 'none', padding: 0, lineHeight: 1.8 }}>
+                  <li><b>Dénomination sociale</b> : SailingLoc</li>
+                  <li><b>Date de création</b> : 15/03/2024</li>
+                  <li><b>Siège social</b> : 12 Quai Louis Durand, 17000 La Rochelle</li>
+                  <li><b>Statut juridique</b> : Société par Actions Simplifiée (SAS)</li>
+                  <li><b>Capital social</b> : 15 000 €</li>
+                  <li><b>Numéro RCS</b> : LA ROCHELLE B 923 456 789</li>
+                  <li><b>SIREN</b> : 923 456 789</li>
+                  <li><b>SIRET</b> : 923 456 789 00014</li>
+                  <li><b>Code APE/NAF</b> : 7990Z – Services de réservation et activités connexes</li>
+                  <li><b>TVA intracommunautaire</b> : FR42923456789</li>
+                </ul>
               </div>
             </div>
             <div className="relative">
               <img
-                src="https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=800"
-                alt="Voilier au coucher du soleil"
+                src={AproposImg}
+                alt="À propos SailingLoc"
                 className="rounded-2xl shadow-2xl w-full"
               />
             </div>

@@ -4,6 +4,7 @@ import { Facebook, Instagram, Youtube, Linkedin, CreditCard, Smartphone, Mail } 
 
 export default function Footer() {
   const [email, setEmail] = useState('');
+  const userPrenom = typeof window !== 'undefined' ? localStorage.getItem('userPrenom') : null;
 
   const handleNewsletterSubmit = (e) => {
     e.preventDefault();
@@ -63,6 +64,20 @@ export default function Footer() {
               <Link to="/confidentialite" className="block hover:text-blue-300 transition-colors">
                 Confidentialité
               </Link>
+              {userPrenom ? (
+                <Link to="/mon-compte" className="block hover:text-blue-300 transition-colors font-bold">
+                  Mon compte
+                </Link>
+              ) : (
+                <>
+                  <Link to="/connexion" className="block hover:text-blue-300 transition-colors">
+                    Connexion
+                  </Link>
+                  <Link to="/inscription" className="block hover:text-blue-300 transition-colors">
+                    Inscription
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 

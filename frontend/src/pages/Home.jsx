@@ -12,6 +12,7 @@ export default function Home() {
   };
 
   const bestSellerBoats = boats.slice(0, 6);
+  // const userPrenom = localStorage.getItem('userPrenom'); // Suppression de l'affichage du prénom
 
   return (
     <div className="min-h-screen">
@@ -49,19 +50,21 @@ export default function Home() {
                   <Calendar className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <input
                     type="date"
+                    placeholder="Date de début"
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
                   />
                 </div>
 
                 <div className="relative">
-                  <Clock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                  <select className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700">
-                    <option value="">Durée</option>
-                    <option value="demi-journee">Demi-journée</option>
-                    <option value="journee">Journée</option>
-                    <option value="weekend">Weekend</option>
-                  </select>
+                  <Calendar className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <input
+                    type="date"
+                    placeholder="Date de fin"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+                  />
                 </div>
+
+                {/* Champ durée supprimé */}
 
                 <div className="relative">
                   <Ship className="absolute left-3 top-3 h-5 w-5 text-gray-400" />

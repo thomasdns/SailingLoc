@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Anchor } from 'lucide-react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -10,6 +12,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -55,11 +58,37 @@ export default function Login() {
     setIsSubmitting(true);
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      alert('Connexion réussie !');
-      // Redirection vers la page d'accueil
+      const response = await fetch('http://localhost:3001/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.message || 'Erreur lors de la connexion.');
+        throw new Error(data.message || 'Erreur lors de la connexion.');
+      }
+      const data = await response.json();
+      localStorage.setItem('userPrenom', data.user.prenom);
+      localStorage.setItem('userRole', data.user.role);
+      toast.success(`Bienvenue ${data.user.prenom} !`, {
+        position: 'top-center',
+        autoClose: 2500,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'colored',
+      });
+      setTimeout(() => navigate('/'), 2600);
     } catch (error) {
-      alert('Erreur lors de la connexion.');
+      alert(error.message || 'Erreur lors de la connexion.');
     } finally {
       setIsSubmitting(false);
     }
@@ -67,6 +96,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
+      <ToastContainer />
       {/* Hero Section */}
       <section className="relative py-16 bg-gradient-to-br from-blue-800 via-blue-900 to-blue-800">
         <div 

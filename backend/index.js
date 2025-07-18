@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import authRoutes from "./Routes/auth.js";
+import contactRoutes from './Routes/contact.js';
 
 dotenv.config();
  
@@ -15,6 +16,7 @@ connectDB();
 
 // Configuration des routes
 app.use("/api/auth", authRoutes);
+app.use('/api/contact', contactRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running");

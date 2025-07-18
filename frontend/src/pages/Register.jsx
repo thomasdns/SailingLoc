@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Phone, Eye, EyeOff, Anchor } from 'lucide-react';
 
 export default function Register() {
@@ -17,6 +17,7 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -74,19 +75,37 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!validateForm()) {
       return;
     }
-    
     setIsSubmitting(true);
-    
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      alert('Inscription réussie ! Vous pouvez maintenant vous connecter.');
-      // Redirection vers la page de connexion
+      // Appel API vers le backend
+      const response = await fetch('http://localhost:3001/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nom: formData.nom,
+          prenom: formData.prenom,
+          email: formData.email,
+          password: formData.password,
+          tel: formData.telephone.replace(/\D/g, ''),
+          role: formData.userType
+        })
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.message); // Affiche le message d'erreur du backend
+        throw new Error(data.message || 'Erreur lors de l\'inscription.');
+      }
+      const data = await response.json();
+      localStorage.setItem('userNom', data.user.nom);
+      navigate('/connexion'); // Redirige vers la page de connexion
+      // Redirection vers la page de connexion (optionnel)
     } catch (error) {
-      alert('Erreur lors de l\'inscription.');
+      alert(error.message || 'Erreur lors de l\'inscription.');
     } finally {
       setIsSubmitting(false);
     }

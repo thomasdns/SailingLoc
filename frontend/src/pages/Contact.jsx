@@ -6,7 +6,8 @@ export default function Contact() {
     nom: '',
     prenom: '',
     telephone: '',
-    message: ''
+    message: '',
+    email: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -60,11 +61,25 @@ export default function Contact() {
     setIsSubmitting(true);
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('http://localhost:3001/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nom: formData.nom,
+          prenom: formData.prenom,
+          telephone: formData.telephone,
+          message: formData.message,
+          email: formData.email
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Erreur lors de l\'envoi du message.');
       alert('Message envoyé avec succès !');
-      setFormData({ nom: '', prenom: '', telephone: '', message: '' });
+      setFormData({ nom: '', prenom: '', telephone: '', message: '', email: '' });
     } catch (error) {
-      alert('Erreur lors de l\'envoi du message.');
+      alert(error.message || 'Erreur lors de l\'envoi du message.');
     } finally {
       setIsSubmitting(false);
     }
@@ -189,6 +204,25 @@ export default function Contact() {
                     <p className="mt-2 text-sm text-red-600">{errors.prenom}</p>
                   )}
                 </div>
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-bold text-gray-900 mb-3">
+                  EMAIL
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-4 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.email ? 'border-red-500' : 'border-gray-200'
+                  }`}
+                  placeholder="Votre email"
+                />
+                {errors.email && (
+                  <p className="mt-2 text-sm text-red-600">{errors.email}</p>
+                )}
               </div>
               
               <div>
