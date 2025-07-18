@@ -43,6 +43,16 @@ export default function Home() {
                     <option value="saint-malo">Saint-Malo</option>
                     <option value="les-glenan">Les Glénan</option>
                     <option value="crozon">Crozon</option>
+                    <option value="la-rochelle">La Rochelle</option>
+                    <option value="marseille">Marseille</option>
+                    <option value="cannes">Cannes</option>
+                    <option value="ajaccio">Ajaccio</option>
+                    <option value="barcelone">Barcelone</option>
+                    <option value="palma">Palma de Majorque</option>
+                    <option value="athenes">Athènes</option>
+                    <option value="venise">Venise</option>
+                    <option value="amsterdam">Amsterdam</option>
+                    <option value="split">Split</option>
                   </select>
                 </div>
 
@@ -71,8 +81,7 @@ export default function Home() {
                   <select className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700">
                     <option value="">Type bateau</option>
                     <option value="voilier">Voilier</option>
-                    <option value="yacht">Yacht</option>
-                    <option value="catamaran">Catamaran</option>
+                    <option value="moteur">Moteur</option>
                   </select>
                 </div>
 

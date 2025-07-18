@@ -125,7 +125,7 @@ export default function Contact() {
                 <Mail className="h-8 w-8 text-blue-900" />
               </div>
               <h3 className="text-xl font-bold mb-4">INFORMATIONS</h3>
-              <p className="text-blue-100 mb-2">contact@sailingloc.com</p>
+              <p className="text-blue-100 mb-2">sailinglocequipe@gmail.com</p>
               <p className="text-sm text-blue-200">Réponse sous 24h</p>
             </div>
 
@@ -134,8 +134,8 @@ export default function Contact() {
                 <MapPin className="h-8 w-8 text-blue-900" />
               </div>
               <h3 className="text-xl font-bold mb-4">ADRESSE</h3>
-              <p className="text-blue-100 mb-2">15 Quai des Corsaires</p>
-              <p className="text-sm text-blue-200">35400 Saint-Malo</p>
+              <p className="text-blue-100 mb-2">12 Quai Louis Durand</p>
+              <p className="text-sm text-blue-200">17000 La Rochelle</p>
             </div>
 
             <div className="bg-blue-900 text-white p-8 rounded-2xl text-center">

@@ -11,6 +11,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Favoris from './pages/Favoris';
 import GestionBateaux from './pages/GestionBateaux';
+import PolitiqueConfidentialite from './pages/PolitiqueConfidentialite';
+import Profil from './pages/Profil';
 
 function App() {
   return (
@@ -28,6 +30,8 @@ function App() {
             <Route path="/inscription" element={<Register />} />
             <Route path="/favoris" element={<Favoris />} />
             <Route path="/gestion-bateaux" element={<GestionBateaux />} />
+            <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
+            <Route path="/profil" element={<Profil />} />
           </Routes>
         </main>
         <Footer />

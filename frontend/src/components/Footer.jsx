@@ -27,18 +27,6 @@ export default function Footer() {
                 </div>
                 <span>Carte bancaire</span>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-                  <Smartphone className="h-5 w-5 text-blue-900" />
-                </div>
-                <span>PayPal</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-                  <CreditCard className="h-5 w-5 text-blue-900" />
-                </div>
-                <span>Virement bancaire</span>
-              </div>
             </div>
           </div>
 
@@ -61,8 +49,8 @@ export default function Footer() {
               <Link to="/mentions-legales" className="block hover:text-blue-300 transition-colors">
                 Mentions légales
               </Link>
-              <Link to="/confidentialite" className="block hover:text-blue-300 transition-colors">
-                Confidentialité
+              <Link to="/politique-confidentialite" className="block hover:text-blue-300 transition-colors">
+                Politique de confidentialité
               </Link>
               {userPrenom ? (
                 <Link to="/mon-compte" className="block hover:text-blue-300 transition-colors font-bold">

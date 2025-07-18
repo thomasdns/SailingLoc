@@ -86,6 +86,13 @@ export default function Header() {
                       >
                         Déconnexion
                       </button>
+                      <button
+                        onClick={() => { setShowAccountMenu(false); window.location.href = '/profil'; }}
+                        className="w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-50 text-sm font-medium flex items-center gap-2 border-t border-gray-100 mt-2"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2" /></svg>
+                        Settings
+                      </button>
                     </div>
                   )}
                 </div>
