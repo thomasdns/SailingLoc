@@ -1,17 +1,19 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, User, Phone, Eye, EyeOff, Anchor } from "lucide-react";
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Mail, Lock, User, Phone, Eye, EyeOff, Anchor } from 'lucide-react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function Register() {
   const [formData, setFormData] = useState({
-    prenom: "",
-    nom: "",
-    email: "",
-    telephone: "",
-    password: "",
-    confirmPassword: "",
+    prenom: '',
+    nom: '',
+    email: '',
+    telephone: '',
+    password: '',
+    confirmPassword: '',
     acceptTerms: false,
-    userType: "client",
+    userType: 'user' // valeur par défaut corrigée
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -21,96 +23,124 @@ export default function Register() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === 'checkbox' ? checked : value
     }));
-
+    
     if (errors[name]) {
-      setErrors((prev) => ({
+      setErrors(prev => ({
         ...prev,
-        [name]: "",
+        [name]: ''
       }));
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
-
+    
     if (!formData.prenom.trim()) {
-      newErrors.prenom = "Le prénom est requis";
+      newErrors.prenom = 'Le prénom est requis';
     }
-
+    
     if (!formData.nom.trim()) {
-      newErrors.nom = "Le nom est requis";
+      newErrors.nom = 'Le nom est requis';
     }
-
+    
     if (!formData.email.trim()) {
-      newErrors.email = "L'email est requis";
+      newErrors.email = 'L\'email est requis';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Format d'email invalide";
+      newErrors.email = 'Format d\'email invalide';
     }
-
+    
     if (!formData.telephone.trim()) {
-      newErrors.telephone = "Le téléphone est requis";
+      newErrors.telephone = 'Le téléphone est requis';
     }
-
+    
     if (!formData.password.trim()) {
-      newErrors.password = "Le mot de passe est requis";
+      newErrors.password = 'Le mot de passe est requis';
     } else if (formData.password.length < 6) {
-      newErrors.password =
-        "Le mot de passe doit contenir au moins 6 caractères";
+      newErrors.password = 'Le mot de passe doit contenir au moins 6 caractères';
     }
-
+    
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
+      newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
     }
-
+    
     if (!formData.acceptTerms) {
-      newErrors.acceptTerms =
-        "Vous devez accepter les conditions d'utilisation";
+      newErrors.acceptTerms = 'Vous devez accepter les conditions d\'utilisation';
     }
-
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     if (!validateForm()) {
       return;
     }
-
+    
     setIsSubmitting(true);
-
-    // Préparer les données à envoyer
-    const payload = {
-      prenom: formData.prenom,
-      nom: formData.nom,
-      email: formData.email,
-      password: formData.password,
-      confirmPassword: formData.confirmPassword, // non utilisé côté backend, mais on peut l'enlever si besoin
-      tel: formData.telephone,
-      role: formData.userType === "client" ? "user" : "proprietaire",
-    };
-
+    
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('http://localhost:3001/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nom: formData.nom,
+          prenom: formData.prenom,
+          email: formData.email,
+          password: formData.password,
+          tel: formData.telephone.replace(/\D/g, ''),
+          role: formData.userType
+        })
       });
-      const data = await response.json();
-      if (response.ok) {
-        alert("Inscription réussie ! Vous pouvez maintenant vous connecter.");
-        navigate("/connexion");
-      } else {
-        // Afficher les erreurs du backend
-        setErrors({ global: data.message || "Erreur lors de l'inscription." });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Inscription échouée');
       }
+      const data = await response.json();
+      localStorage.setItem('userNom', data.user.nom);
+      toast.success(
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <span style={{ fontSize: 22, marginRight: 10 }}>✅</span>
+          <div>
+            <strong style={{ color: '#16a34a' }}>Inscription réussie !</strong><br />
+            Bienvenue <span style={{ color: '#16a34a' }}>{data.user.nom}</span> 👋
+          </div>
+        </div>,
+        {
+          position: 'top-center',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: 'light',
+          style: { background: '#e6f9ec', color: '#16a34a', fontWeight: 500, fontSize: 18, border: '2px solid #16a34a' },
+          icon: false
+        }
+      );
+      setTimeout(() => navigate('/connexion'), 3100);
     } catch (error) {
-      setErrors({ global: "Erreur lors de l'inscription." });
+      toast.error(error.message || 'Erreur lors de l\'inscription.', {
+        position: 'top-center',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'light',
+        style: { background: '#fde6e6', color: '#991b1b', fontWeight: 500, fontSize: 18, border: '2px solid #991b1b' },
+        icon: false
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -118,14 +148,14 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
+      <ToastContainer />
       {/* Hero Section */}
       <section className="relative py-16 bg-gradient-to-br from-blue-800 via-blue-900 to-blue-800">
-        <div
+        <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage:
-              "url(https://images.pexels.com/photos/1001682/pexels-photo-1001682.jpeg?auto=compress&cs=tinysrgb&w=1600)",
-            opacity: 0.3,
+            backgroundImage: 'url(https://images.pexels.com/photos/1001682/pexels-photo-1001682.jpeg?auto=compress&cs=tinysrgb&w=1600)',
+            opacity: 0.3
           }}
         ></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -149,27 +179,27 @@ export default function Register() {
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
                 INSCRIPTION
               </h2>
-              <p className="text-gray-600">Créez votre compte SailingLoc</p>
+              <p className="text-gray-600">
+                Créez votre compte SailingLoc
+              </p>
             </div>
-
+            
             {/* User Type Selection */}
             <div className="mb-8">
               <label className="block text-sm font-bold text-gray-900 mb-3 uppercase">
                 TYPE DE COMPTE
               </label>
               <div className="grid grid-cols-2 gap-4">
-                <label
-                  className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                    formData.userType === "client"
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
+                <label className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                  formData.userType === 'user' 
+                    ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}>
                   <input
                     type="radio"
                     name="userType"
-                    value="client"
-                    checked={formData.userType === "client"}
+                    value="user" // corrigé
+                    checked={formData.userType === 'user'}
                     onChange={handleInputChange}
                     className="sr-only"
                   />
@@ -179,19 +209,17 @@ export default function Register() {
                     <p className="text-xs mt-1">Louer des bateaux</p>
                   </div>
                 </label>
-
-                <label
-                  className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                    formData.userType === "proprietaire"
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
+                
+                <label className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                  formData.userType === 'proprietaire' 
+                    ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}>
                   <input
                     type="radio"
                     name="userType"
                     value="proprietaire"
-                    checked={formData.userType === "proprietaire"}
+                    checked={formData.userType === 'proprietaire'}
                     onChange={handleInputChange}
                     className="sr-only"
                   />
@@ -203,14 +231,11 @@ export default function Register() {
                 </label>
               </div>
             </div>
-
+            
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label
-                    htmlFor="prenom"
-                    className="block text-sm font-bold text-gray-900 mb-3 uppercase"
-                  >
+                  <label htmlFor="prenom" className="block text-sm font-bold text-gray-900 mb-3 uppercase">
                     PRÉNOM
                   </label>
                   <div className="relative">
@@ -222,7 +247,7 @@ export default function Register() {
                       value={formData.prenom}
                       onChange={handleInputChange}
                       className={`w-full pl-10 pr-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        errors.prenom ? "border-red-500" : "border-gray-200"
+                        errors.prenom ? 'border-red-500' : 'border-gray-200'
                       }`}
                       placeholder="Prénom"
                     />
@@ -231,12 +256,9 @@ export default function Register() {
                     <p className="mt-2 text-sm text-red-600">{errors.prenom}</p>
                   )}
                 </div>
-
+                
                 <div>
-                  <label
-                    htmlFor="nom"
-                    className="block text-sm font-bold text-gray-900 mb-3 uppercase"
-                  >
+                  <label htmlFor="nom" className="block text-sm font-bold text-gray-900 mb-3 uppercase">
                     NOM
                   </label>
                   <div className="relative">
@@ -248,7 +270,7 @@ export default function Register() {
                       value={formData.nom}
                       onChange={handleInputChange}
                       className={`w-full pl-10 pr-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        errors.nom ? "border-red-500" : "border-gray-200"
+                        errors.nom ? 'border-red-500' : 'border-gray-200'
                       }`}
                       placeholder="Nom"
                     />
@@ -258,12 +280,9 @@ export default function Register() {
                   )}
                 </div>
               </div>
-
+              
               <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-bold text-gray-900 mb-3 uppercase"
-                >
+                <label htmlFor="email" className="block text-sm font-bold text-gray-900 mb-3 uppercase">
                   EMAIL
                 </label>
                 <div className="relative">
@@ -275,7 +294,7 @@ export default function Register() {
                     value={formData.email}
                     onChange={handleInputChange}
                     className={`w-full pl-10 pr-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.email ? "border-red-500" : "border-gray-200"
+                      errors.email ? 'border-red-500' : 'border-gray-200'
                     }`}
                     placeholder="votre@email.com"
                   />
@@ -284,12 +303,9 @@ export default function Register() {
                   <p className="mt-2 text-sm text-red-600">{errors.email}</p>
                 )}
               </div>
-
+              
               <div>
-                <label
-                  htmlFor="telephone"
-                  className="block text-sm font-bold text-gray-900 mb-3 uppercase"
-                >
+                <label htmlFor="telephone" className="block text-sm font-bold text-gray-900 mb-3 uppercase">
                   TÉLÉPHONE
                 </label>
                 <div className="relative">
@@ -301,35 +317,30 @@ export default function Register() {
                     value={formData.telephone}
                     onChange={handleInputChange}
                     className={`w-full pl-10 pr-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.telephone ? "border-red-500" : "border-gray-200"
+                      errors.telephone ? 'border-red-500' : 'border-gray-200'
                     }`}
                     placeholder="06 12 34 56 78"
                   />
                 </div>
                 {errors.telephone && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.telephone}
-                  </p>
+                  <p className="mt-2 text-sm text-red-600">{errors.telephone}</p>
                 )}
               </div>
-
+              
               <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-bold text-gray-900 mb-3 uppercase"
-                >
+                <label htmlFor="password" className="block text-sm font-bold text-gray-900 mb-3 uppercase">
                   MOT DE PASSE
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     id="password"
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
                     className={`w-full pl-10 pr-12 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.password ? "border-red-500" : "border-gray-200"
+                      errors.password ? 'border-red-500' : 'border-gray-200'
                     }`}
                     placeholder="Mot de passe"
                   />
@@ -345,26 +356,21 @@ export default function Register() {
                   <p className="mt-2 text-sm text-red-600">{errors.password}</p>
                 )}
               </div>
-
+              
               <div>
-                <label
-                  htmlFor="confirmPassword"
-                  className="block text-sm font-bold text-gray-900 mb-3 uppercase"
-                >
+                <label htmlFor="confirmPassword" className="block text-sm font-bold text-gray-900 mb-3 uppercase">
                   CONFIRMER LE MOT DE PASSE
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <input
-                    type={showConfirmPassword ? "text" : "password"}
+                    type={showConfirmPassword ? 'text' : 'password'}
                     id="confirmPassword"
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     className={`w-full pl-10 pr-12 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.confirmPassword
-                        ? "border-red-500"
-                        : "border-gray-200"
+                      errors.confirmPassword ? 'border-red-500' : 'border-gray-200'
                     }`}
                     placeholder="Confirmer le mot de passe"
                   />
@@ -373,20 +379,14 @@ export default function Register() {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
                   >
-                    {showConfirmPassword ? (
-                      <EyeOff size={20} />
-                    ) : (
-                      <Eye size={20} />
-                    )}
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.confirmPassword}
-                  </p>
+                  <p className="mt-2 text-sm text-red-600">{errors.confirmPassword}</p>
                 )}
               </div>
-
+              
               <div>
                 <label className="flex items-start space-x-3">
                   <input
@@ -397,36 +397,28 @@ export default function Register() {
                     className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <span className="text-sm text-gray-600">
-                    J'accepte les{" "}
-                    <Link
-                      to="/conditions"
-                      className="text-blue-600 hover:text-blue-700"
-                    >
+                    J'accepte les{' '}
+                    <Link to="/conditions" className="text-blue-600 hover:text-blue-700">
                       conditions d'utilisation
-                    </Link>{" "}
-                    et la{" "}
-                    <Link
-                      to="/confidentialite"
-                      className="text-blue-600 hover:text-blue-700"
-                    >
+                    </Link>{' '}
+                    et la{' '}
+                    <Link to="/confidentialite" className="text-blue-600 hover:text-blue-700">
                       politique de confidentialité
                     </Link>
                   </span>
                 </label>
                 {errors.acceptTerms && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {errors.acceptTerms}
-                  </p>
+                  <p className="mt-2 text-sm text-red-600">{errors.acceptTerms}</p>
                 )}
               </div>
-
+              
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className={`w-full py-3 px-6 rounded-full font-bold text-lg transition-colors ${
-                  isSubmitting
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-orange-500 hover:bg-orange-600"
+                  isSubmitting 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-orange-500 hover:bg-orange-600'
                 } text-white shadow-lg`}
               >
                 {isSubmitting ? (
@@ -435,21 +427,15 @@ export default function Register() {
                     <span>INSCRIPTION...</span>
                   </div>
                 ) : (
-                  "CRÉER MON COMPTE"
+                  'CRÉER MON COMPTE'
                 )}
               </button>
             </form>
-
+            
             <div className="mt-8 text-center">
-              {errors.global && (
-                <p className="text-red-600 mb-2">{errors.global}</p>
-              )}
               <p className="text-gray-600">
-                Déjà un compte ?{" "}
-                <Link
-                  to="/connexion"
-                  className="text-blue-600 hover:text-blue-700 font-semibold"
-                >
+                Déjà un compte ?{' '}
+                <Link to="/connexion" className="text-blue-600 hover:text-blue-700 font-semibold">
                   Se connecter
                 </Link>
               </p>

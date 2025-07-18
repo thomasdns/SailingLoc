@@ -76,17 +76,28 @@ export default function Login() {
       const data = await response.json();
       localStorage.setItem('userPrenom', data.user.prenom);
       localStorage.setItem('userRole', data.user.role);
-      toast.success(`Bienvenue ${data.user.prenom} !`, {
-        position: 'top-center',
-        autoClose: 2500,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: 'colored',
-      });
-      setTimeout(() => navigate('/'), 2600);
+      toast.success(
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <span style={{ fontSize: 22, marginRight: 10 }}>✅</span>
+          <div>
+            <strong style={{ color: '#16a34a' }}>Connexion réussie !</strong><br />
+            Bienvenue <span style={{ color: '#16a34a' }}>{data.user.prenom}</span> 👋
+          </div>
+        </div>,
+        {
+          position: 'top-center',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: 'light',
+          style: { background: '#e6f9ec', color: '#16a34a', fontWeight: 500, fontSize: 18, border: '2px solid #16a34a' },
+          icon: false
+        }
+      );
+      setTimeout(() => navigate('/'), 3100);
     } catch (error) {
       alert(error.message || 'Erreur lors de la connexion.');
     } finally {
