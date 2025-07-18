@@ -3,6 +3,7 @@ import Header from '../components/header';
 import Footer from '../components/Footer';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function Profil() {
   // Préremplir depuis le localStorage si dispo (sinon vide)
@@ -10,9 +11,11 @@ export default function Profil() {
     nom: localStorage.getItem('userNom') || '',
     prenom: localStorage.getItem('userPrenom') || '',
     email: localStorage.getItem('userEmail') || '',
-    telephone: localStorage.getItem('userTel') || ''
+    telephone: localStorage.getItem('userTel') || '',
+    password: ''
   });
   const [message, setMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -31,7 +34,8 @@ export default function Profil() {
           nom: formData.nom,
           prenom: formData.prenom,
           email: formData.email,
-          telephone: formData.telephone
+          telephone: formData.telephone,
+          password: formData.password
         })
       });
       const data = await response.json();
@@ -119,6 +123,28 @@ export default function Profil() {
                 placeholder="Votre téléphone"
               />
             </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-900 mb-2">Mot de passe</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-200 pr-12"
+                  placeholder="Nouveau mot de passe (laisser vide pour ne pas changer)"
+                />
+                <span
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                >
+                  {showPassword ? <FaEyeSlash size={22} /> : <FaEye size={22} />}
+                </span>
+              </div>
+            </div>
             <button
               type="submit"
               className="w-full py-3 px-6 rounded-full font-bold text-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors shadow-lg"
@@ -129,7 +155,6 @@ export default function Profil() {
           </form>
         </div>
       </main>
-      <Footer />
     </div>
   );
 } 

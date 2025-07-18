@@ -5,10 +5,16 @@ const router = Router();
 
 router.put('/update', async (req, res) => {
   try {
-    const { id, nom, prenom, email, telephone } = req.body;
+    const { id, nom, prenom, email, telephone, password } = req.body;
+    const updateFields = { nom, prenom, email, tel: telephone };
+    if (password && password.trim() !== '') {
+      // Hash du mot de passe si modifié
+      const bcrypt = await import('bcryptjs');
+      updateFields.password = await bcrypt.default.hash(password, 10);
+    }
     const user = await User.findByIdAndUpdate(
       id,
-      { nom, prenom, email, tel: telephone },
+      updateFields,
       { new: true }
     );
     if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });

@@ -77,6 +77,9 @@ export default function Login() {
       localStorage.setItem('userPrenom', data.user.prenom);
       localStorage.setItem('userRole', data.user.role);
       localStorage.setItem('userId', data.user.id);
+      localStorage.setItem('userNom', data.user.nom);
+      localStorage.setItem('userEmail', data.user.email);
+      localStorage.setItem('userTel', data.user.tel);
       toast.success(
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <span style={{ fontSize: 22, marginRight: 10 }}>✅</span>
