@@ -52,6 +52,9 @@ export default function Footer() {
               <Link to="/politique-confidentialite" className="block hover:text-blue-300 transition-colors">
                 Politique de confidentialité
               </Link>
+              <Link to="/cgu-cgv" className="block hover:text-blue-300 transition-colors">
+                CGU / CGV
+              </Link>
               {userPrenom ? (
                 <Link to="/mon-compte" className="block hover:text-blue-300 transition-colors font-bold">
                   Mon compte

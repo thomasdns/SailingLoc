@@ -13,6 +13,8 @@ import Favoris from './pages/Favoris';
 import GestionBateaux from './pages/GestionBateaux';
 import PolitiqueConfidentialite from './pages/PolitiqueConfidentialite';
 import Profil from './pages/Profil';
+import CGU_CGV from './pages/CGU_CGV';
+import MentionsLegales from './pages/MentionsLegales';
 
 function App() {
   return (
@@ -32,6 +34,8 @@ function App() {
             <Route path="/gestion-bateaux" element={<GestionBateaux />} />
             <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
             <Route path="/profil" element={<Profil />} />
+            <Route path="/cgu-cgv" element={<CGU_CGV />} />
+            <Route path="/mentions-legales" element={<MentionsLegales />} />
           </Routes>
         </main>
         <Footer />

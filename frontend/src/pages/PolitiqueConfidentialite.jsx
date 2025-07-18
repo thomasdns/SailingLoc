@@ -110,7 +110,7 @@ const PolitiqueConfidentialite = () => (
           <li>Droit à la portabilité</li>
           <li>Droit d’opposition et de retrait du consentement</li>
         </ul>
-        <p>Pour exercer vos droits, envoyez un e-mail à : <a href="mailto:contact@sailingloc.fr">contact@sailingloc.fr</a>.</p>
+        <p>Pour exercer vos droits, envoyez un e-mail à : <a href="mailto:sailinglocequipe@gmail.com">sailinglocequipe@gmail.com</a>.</p>
       </section>
 
       <section style={styles.section}>
