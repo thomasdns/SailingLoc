@@ -9,7 +9,8 @@ const userSchema = new mongoose.Schema({
   tel: { type: String },
   role: {
     type: String,
-    enum: ['admin', 'user', 'proprietaire', 'client'],
+    enum: ['admin', 'client', 'proprietaire'],
+    default: 'client'
   }
 }, { timestamps: true });
 

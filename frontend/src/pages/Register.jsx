@@ -13,7 +13,7 @@ export default function Register() {
     password: '',
     confirmPassword: '',
     acceptTerms: false,
-    userType: 'user' // valeur par défaut corrigée
+    userType: 'client' // valeur par défaut corrigée
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -191,15 +191,15 @@ export default function Register() {
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <label className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                  formData.userType === 'user' 
+                  formData.userType === 'client' 
                     ? 'border-blue-500 bg-blue-50 text-blue-700' 
                     : 'border-gray-200 hover:border-gray-300'
                 }`}>
                   <input
                     type="radio"
                     name="userType"
-                    value="user" // corrigé
-                    checked={formData.userType === 'user'}
+                    value="client" // corrigé
+                    checked={formData.userType === 'client'}
                     onChange={handleInputChange}
                     className="sr-only"
                   />
