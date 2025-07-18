@@ -1,6 +1,6 @@
 import React from "react";
 import Header from "../components/header";
-import Footer from "../components/Footer";
+// import Footer from "../components/Footer";
 import { Link } from "react-router-dom";
 
 export default function CGU_CGV() {
@@ -65,7 +65,7 @@ export default function CGU_CGV() {
           </section>
         </div>
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 } 

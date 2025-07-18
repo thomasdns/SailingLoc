@@ -56,9 +56,14 @@ export default function Footer() {
                 CGU / CGV
               </Link>
               {userPrenom ? (
-                <Link to="/mon-compte" className="block hover:text-blue-300 transition-colors font-bold">
-                  Mon compte
-                </Link>
+                <>
+                  <Link to="/connexion" className="block hover:text-blue-300 transition-colors">
+                    Connexion
+                  </Link>
+                  <Link to="/inscription" className="block hover:text-blue-300 transition-colors">
+                    Inscription
+                  </Link>
+                </>
               ) : (
                 <>
                   <Link to="/connexion" className="block hover:text-blue-300 transition-colors">

@@ -26,6 +26,10 @@ export default function Header() {
     window.location.reload();
   };
 
+  const handleNavClick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <header className="bg-white shadow-sm fixed w-full top-0 z-50 border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -41,6 +45,7 @@ export default function Header() {
               <Link
                 key={item.name}
                 to={item.path}
+                onClick={handleNavClick}
                 className={`px-3 py-2 text-sm font-medium transition-colors ${
                   isActive(item.path)
                     ? 'text-blue-600 border-b-2 border-blue-600'
@@ -102,12 +107,14 @@ export default function Header() {
                 <Link
                   to="/connexion"
                   className="text-gray-700 hover:text-blue-600 px-4 py-2 text-sm font-medium transition-colors"
+                  onClick={handleNavClick}
                 >
                   Connexion
                 </Link>
                 <Link
                   to="/inscription"
                   className="bg-orange-500 text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-orange-600 transition-colors shadow-sm"
+                  onClick={handleNavClick}
                 >
                   Inscription
                 </Link>
@@ -137,7 +144,7 @@ export default function Header() {
                       ? 'text-blue-600 bg-blue-50'
                       : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                   }`}
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={() => { setIsMenuOpen(false); handleNavClick(); }}
                 >
                   {item.name}
                 </Link>
@@ -149,7 +156,7 @@ export default function Header() {
                       <Link
                         to="/gestion-bateaux"
                         className="block w-full text-center border border-blue-600 text-blue-600 px-3 py-2 rounded-full text-base font-medium hover:bg-blue-50 transition-colors flex items-center justify-center"
-                        onClick={() => setIsMenuOpen(false)}
+                        onClick={() => { setIsMenuOpen(false); handleNavClick(); }}
                       >
                         Gestion bateaux
                       </Link>
@@ -157,7 +164,7 @@ export default function Header() {
                     <Link
                       to="/favoris"
                       className="block w-full text-center border border-blue-600 text-blue-600 px-3 py-2 rounded-full text-base font-medium hover:bg-blue-50 transition-colors flex items-center justify-center"
-                      onClick={() => setIsMenuOpen(false)}
+                      onClick={() => { setIsMenuOpen(false); handleNavClick(); }}
                     >
                       <Heart className="h-5 w-5" />
                     </Link>
@@ -186,14 +193,14 @@ export default function Header() {
                     <Link
                       to="/connexion"
                       className="block w-full text-center border border-orange-500 text-orange-500 px-3 py-2 rounded-full text-base font-medium hover:bg-orange-50 transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
+                      onClick={() => { setIsMenuOpen(false); handleNavClick(); }}
                     >
                       Connexion
                     </Link>
                     <Link
                       to="/inscription"
                       className="block w-full text-center bg-orange-500 text-white px-3 py-2 rounded-full text-base font-medium hover:bg-orange-600 transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
+                      onClick={() => { setIsMenuOpen(false); handleNavClick(); }}
                     >
                       Inscription
                     </Link>

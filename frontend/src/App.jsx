@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Header from './components/Header';
+import Header from './components/header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import Boats from './pages/Boats';
@@ -15,10 +15,12 @@ import PolitiqueConfidentialite from './pages/PolitiqueConfidentialite';
 import Profil from './pages/Profil';
 import CGU_CGV from './pages/CGU_CGV';
 import MentionsLegales from './pages/MentionsLegales';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <div className="min-h-screen bg-gray-50">
         <Header />
         <main>

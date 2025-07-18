@@ -12,6 +12,7 @@ export default function Home() {
   };
 
   const bestSellerBoats = boats.slice(0, 6);
+  const isLoggedIn = Boolean(localStorage.getItem('userId'));
   // const userPrenom = localStorage.getItem('userPrenom'); // Suppression de l'affichage du prénom
 
   return (
@@ -183,20 +184,22 @@ export default function Home() {
       </section>
 
       {/* CTA Section - Style maquette */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-blue-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold text-white mb-6">
-            Propriétaire d'un bateau ?
-          </h2>
-          <p className="text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
-            Faites le naviguer plutôt sans vous et générez des revenus complémentaires en le mettant en location.
-          </p>
-          <button className="inline-flex items-center space-x-3 bg-orange-500 text-white px-10 py-4 rounded-full font-medium hover:bg-orange-600 transition-colors shadow-lg text-lg">
-            <UserPlus size={24} />
-            <span>S'inscrire</span>
-          </button>
-        </div>
-      </section>
+      {!isLoggedIn && (
+        <section className="py-20 bg-gradient-to-r from-blue-600 to-blue-800">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-4xl font-bold text-white mb-6">
+              Propriétaire d'un bateau ?
+            </h2>
+            <p className="text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
+              Faites le naviguer plutôt sans vous et générez des revenus complémentaires en le mettant en location.
+            </p>
+            <button className="inline-flex items-center space-x-3 bg-orange-500 text-white px-10 py-4 rounded-full font-medium hover:bg-orange-600 transition-colors shadow-lg text-lg">
+              <UserPlus size={24} />
+              <span>S'inscrire</span>
+            </button>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
