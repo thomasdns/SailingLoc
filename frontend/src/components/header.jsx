@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Heart } from 'lucide-react';
+import { Menu, X, Heart, User } from 'lucide-react';
 import Logo from '../../assets/Logo.png';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
 
   const navItems = [
     { name: 'Accueil', path: '/' },
@@ -17,6 +18,13 @@ export default function Header() {
   const isActive = (path) => location.pathname === path;
 
   const userPrenom = typeof window !== 'undefined' ? localStorage.getItem('userPrenom') : null;
+  const userRole = typeof window !== 'undefined' ? localStorage.getItem('userRole') : null;
+
+  const handleLogout = () => {
+    localStorage.removeItem('userPrenom');
+    localStorage.removeItem('userRole');
+    window.location.reload();
+  };
 
   return (
     <header className="bg-white shadow-sm fixed w-full top-0 z-50 border-b border-gray-100">
@@ -54,12 +62,33 @@ export default function Header() {
                 >
                   <Heart className="h-5 w-5" />
                 </Link>
-                <Link
-                  to="/mon-compte"
-                  className="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
-                >
-                  Mon compte
-                </Link>
+                {userRole === 'proprietaire' && (
+                  <Link
+                    to="/gestion-bateaux"
+                    className="text-blue-600 hover:text-blue-800 px-4 py-2 text-sm font-medium transition-colors flex items-center"
+                  >
+                    Gestion bateaux
+                  </Link>
+                )}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowAccountMenu((v) => !v)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center focus:outline-none"
+                  >
+                    <User className="h-5 w-5" />
+                  </button>
+                  {showAccountMenu && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-4 z-50 border border-gray-100">
+                      <div className="px-4 py-2 text-gray-700 text-sm mb-2">Bienvenue <span className="font-bold text-blue-700">{userPrenom}</span></div>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 text-sm font-medium"
+                      >
+                        Déconnexion
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <>
@@ -109,6 +138,15 @@ export default function Header() {
               <div className="mt-4 space-y-2">
                 {userPrenom ? (
                   <>
+                    {userRole === 'proprietaire' && (
+                      <Link
+                        to="/gestion-bateaux"
+                        className="block w-full text-center border border-blue-600 text-blue-600 px-3 py-2 rounded-full text-base font-medium hover:bg-blue-50 transition-colors flex items-center justify-center"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Gestion bateaux
+                      </Link>
+                    )}
                     <Link
                       to="/favoris"
                       className="block w-full text-center border border-blue-600 text-blue-600 px-3 py-2 rounded-full text-base font-medium hover:bg-blue-50 transition-colors flex items-center justify-center"
@@ -116,13 +154,25 @@ export default function Header() {
                     >
                       <Heart className="h-5 w-5" />
                     </Link>
-                    <Link
-                      to="/mon-compte"
-                      className="block w-full text-center bg-blue-600 text-white px-3 py-2 rounded-full text-base font-medium hover:bg-blue-700 transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Mon compte
-                    </Link>
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowAccountMenu((v) => !v)}
+                        className="block w-full text-center border border-blue-600 text-blue-600 px-3 py-2 rounded-full text-base font-medium hover:bg-blue-50 transition-colors flex items-center justify-center"
+                      >
+                        <User className="h-5 w-5" />
+                      </button>
+                      {showAccountMenu && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-4 z-50 border border-gray-100">
+                          <div className="px-4 py-2 text-gray-700 text-sm mb-2">Bienvenue <span className="font-bold text-blue-700">{userPrenom}</span></div>
+                          <button
+                            onClick={handleLogout}
+                            className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 text-sm font-medium"
+                          >
+                            Déconnexion
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <>

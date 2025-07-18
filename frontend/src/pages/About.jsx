@@ -1,6 +1,7 @@
 import React from 'react';
 import { Ship, Shield, CreditCard, Users, MapPin, Clock } from 'lucide-react';
 import AproposImg from '../../assets/apropos.png';
+import { Link } from 'react-router-dom';
 
 export default function About() {
   const pillars = [
@@ -126,12 +127,12 @@ export default function About() {
             Découvrez notre sélection de bateaux et réservez votre prochaine aventure
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-white text-blue-600 px-8 py-4 rounded-full font-medium hover:bg-gray-100 transition-colors">
+            <Link to="/bateaux" className="bg-white text-blue-600 px-8 py-4 rounded-full font-medium hover:bg-gray-100 transition-colors text-center">
               Voir les bateaux
-            </button>
-            <button className="bg-orange-500 text-white px-8 py-4 rounded-full font-medium hover:bg-orange-600 transition-colors">
+            </Link>
+            <Link to="/contact" className="bg-orange-500 text-white px-8 py-4 rounded-full font-medium hover:bg-orange-600 transition-colors text-center">
               Nous contacter
-            </button>
+            </Link>
           </div>
         </div>
       </section>

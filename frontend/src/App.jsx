@@ -9,8 +9,8 @@ import Contact from './pages/Contact';
 import BoatDetail from './pages/BoatDetail';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import MonCompte from './pages/MonCompte';
 import Favoris from './pages/Favoris';
+import GestionBateaux from './pages/GestionBateaux';
 
 function App() {
   return (
@@ -26,8 +26,8 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/connexion" element={<Login />} />
             <Route path="/inscription" element={<Register />} />
-            <Route path="/mon-compte" element={<MonCompte />} />
             <Route path="/favoris" element={<Favoris />} />
+            <Route path="/gestion-bateaux" element={<GestionBateaux />} />
           </Routes>
         </main>
         <Footer />
