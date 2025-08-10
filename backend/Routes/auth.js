@@ -8,7 +8,7 @@ const router = Router();
 router.post('/register', async (req, res) => {
   try {
     // Extract data from request body
-    const { email, password, nom, prenom, tel } = req.body;
+    const { email, password, nom, prenom, tel, role } = req.body;
     
     // Validation du mot de passe fort
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
@@ -23,6 +23,13 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Le champ tel doit contenir exactement 10 chiffres (0-9), sans espaces ni caractères spéciaux. Ce champ doit etre une chaine de caractères.' });
     }
 
+    // Validation du rôle
+    const validRoles = ['admin', 'locataire', 'proprietaire'];
+    const userRole = role || 'locataire'; // Rôle par défaut
+    if (!validRoles.includes(userRole)) {
+      return res.status(400).json({ message: 'Rôle invalide. Rôles autorisés: admin, locataire, proprietaire' });
+    }
+
     // Check if user already exists with this email
     let user = await User.findOne({ email });
     if (user) {
@@ -35,7 +42,8 @@ router.post('/register', async (req, res) => {
       password,
       nom,
       prenom,
-      tel
+      tel,
+      role: userRole
     });
 
     await user.save();
