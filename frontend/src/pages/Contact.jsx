@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Phone, Mail, MapPin, Clock, Send } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Send, CheckCircle, X } from 'lucide-react';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -12,6 +12,7 @@ export default function Contact() {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -76,8 +77,16 @@ export default function Contact() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Erreur lors de l\'envoi du message.');
-      alert('Message envoyé avec succès !');
+      
+      // Afficher le message de succès moderne
+      setShowSuccess(true);
       setFormData({ nom: '', prenom: '', telephone: '', message: '', email: '' });
+      
+      // Masquer automatiquement après 5 secondes
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 5000);
+      
     } catch (error) {
       alert(error.message || 'Erreur lors de l\'envoi du message.');
     } finally {
@@ -87,6 +96,26 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
+      {/* Notification de succès moderne */}
+      {showSuccess && (
+        <div className="fixed top-24 right-4 z-50 animate-slide-in-right">
+          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-3 max-w-md border border-green-400">
+            <div className="animate-bounce-in">
+              <CheckCircle className="h-7 w-7 text-green-100 flex-shrink-0" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-lg">Message envoyé ! 🎉</h3>
+              <p className="text-green-100 text-sm">Nous vous répondrons dans les plus brefs délais.</p>
+            </div>
+            <button
+              onClick={() => setShowSuccess(false)}
+              className="text-green-100 hover:text-white transition-colors duration-200 hover:bg-green-400 hover:bg-opacity-20 rounded-full p-1"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
       {/* Hero Section */}
       <section className="relative py-24 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800">
         <div 

@@ -31,7 +31,7 @@ export default function Home() {
           <div className="text-center text-white max-w-4xl">
             <h1 className="text-6xl md:text-8xl font-bold mb-8 tracking-wider">SAILINGLOC</h1>
             <p className="text-xl md:text-2xl mb-12 font-light max-w-3xl mx-auto leading-relaxed">
-              Découvrez les plus beaux bateaux de Bretagne pour vos aventures en mer
+              Découvrez les plus beaux bateaux pour vos aventures en mer
             </p>
             
             {/* Barre de recherche intégrée comme dans la maquette */}
