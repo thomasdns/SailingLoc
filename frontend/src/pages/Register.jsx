@@ -230,25 +230,7 @@ export default function Register() {
                   </div>
                 </label>
 
-                <label className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                  formData.userType === 'admin' 
-                    ? 'border-red-500 bg-red-50 text-red-700' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}>
-                  <input
-                    type="radio"
-                    name="userType"
-                    value="admin"
-                    checked={formData.userType === 'admin'}
-                    onChange={handleInputChange}
-                    className="sr-only"
-                  />
-                  <div className="text-center">
-                    <User className="h-8 w-8 mx-auto mb-2" />
-                    <span className="font-semibold">ADMIN</span>
-                    <p className="text-xs mt-1">Administration</p>
-                  </div>
-                </label>
+
               </div>
             </div>
             

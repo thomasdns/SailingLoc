@@ -21,9 +21,14 @@ export default function Header() {
   const userRole = typeof window !== 'undefined' ? localStorage.getItem('userRole') : null;
 
   const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userNom');
     localStorage.removeItem('userPrenom');
     localStorage.removeItem('userRole');
-    window.location.reload();
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userTel');
+    window.location.href = '/connexion';
   };
 
   const handleNavClick = () => {

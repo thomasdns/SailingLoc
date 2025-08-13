@@ -101,6 +101,11 @@ export default function AdminDashboard() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userNom');
+    localStorage.removeItem('userPrenom');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userTel');
     window.location.href = '/connexion';
   };
 
