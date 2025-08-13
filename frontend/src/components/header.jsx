@@ -75,6 +75,14 @@ export default function Header() {
                     Gestion bateaux
                   </Link>
                 )}
+                {userRole === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors shadow-sm flex items-center"
+                  >
+                    Dashboard Admin
+                  </Link>
+                )}
                 <div className="relative">
                   <button
                     onClick={() => setShowAccountMenu((v) => !v)}
@@ -159,6 +167,15 @@ export default function Header() {
                         onClick={() => { setIsMenuOpen(false); handleNavClick(); }}
                       >
                         Gestion bateaux
+                      </Link>
+                    )}
+                    {userRole === 'admin' && (
+                      <Link
+                        to="/admin"
+                        className="block w-full text-center bg-red-600 text-white px-3 py-2 rounded-lg text-base font-medium hover:bg-red-700 transition-colors"
+                        onClick={() => { setIsMenuOpen(false); handleNavClick(); }}
+                      >
+                        Dashboard Admin
                       </Link>
                     )}
                     <Link

@@ -74,6 +74,7 @@ export default function Login() {
         throw new Error(data.message || 'Erreur lors de la connexion.');
       }
       const data = await response.json();
+      localStorage.setItem('token', data.token);
       localStorage.setItem('userPrenom', data.user.prenom);
       localStorage.setItem('userRole', data.user.role);
       localStorage.setItem('userId', data.user.id);
@@ -101,7 +102,9 @@ export default function Login() {
           icon: false
         }
       );
-      setTimeout(() => navigate('/'), 3100);
+      // Redirection selon le rôle de l'utilisateur
+      const redirectPath = data.user.role === 'admin' ? '/admin' : '/';
+      setTimeout(() => navigate(redirectPath), 3100);
     } catch (error) {
       alert(error.message || 'Erreur lors de la connexion.');
     } finally {
