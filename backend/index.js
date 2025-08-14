@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import authRoutes from "./Routes/auth.js";
 import boatRoutes from "./Routes/boat.js";
+import bookingRoutes from "./Routes/bookings.js";
+import reviewRoutes from "./Routes/reviews.js";
 
 dotenv.config();
  
@@ -17,6 +19,8 @@ connectDB();
 // Configuration des routes
 app.use("/api/auth", authRoutes);
 app.use("/api/boats", boatRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running");
