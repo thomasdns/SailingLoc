@@ -10,6 +10,14 @@ router.post("/register", async (req, res) => {
   try {
     // Extract data from request body
     const { email, password, nom, prenom, tel, role } = req.body;
+    
+    // Validation du mot de passe fort
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        message: "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial."
+      });
+    }
 
     // Validation du numéro de téléphone
     if (typeof tel !== "string" || !/^[0-9]{10}$/.test(tel)) {
@@ -21,6 +29,14 @@ router.post("/register", async (req, res) => {
     if (!nom || !prenom || !email || !password) {
       return res.status(400).json({ message: "Tous les champs sont requis." });
     }
+
+    // Validation du rôle
+    const validRoles = ['admin', 'locataire', 'proprietaire'];
+    const userRole = role || 'locataire'; // Rôle par défaut
+    if (!validRoles.includes(userRole)) {
+      return res.status(400).json({ message: 'Rôle invalide. Rôles autorisés: admin, locataire, proprietaire' });
+    }
+
     // Check if user already exists with this email
     let user = await User.findOne({ email });
     if (user) {
