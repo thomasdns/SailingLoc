@@ -98,18 +98,29 @@ export default function Header() {
                   {showAccountMenu && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-4 z-50 border border-gray-100">
                       <div className="px-4 py-2 text-gray-700 text-sm mb-2">Bienvenue <span className="font-bold text-blue-700">{userPrenom}</span></div>
-                      <button
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 text-sm font-medium"
+                      
+                      <Link
+                        to="/mes-reservations"
+                        onClick={() => setShowAccountMenu(false)}
+                        className="block w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-50 text-sm font-medium"
                       >
-                        Déconnexion
-                      </button>
-                      <button
-                        onClick={() => { setShowAccountMenu(false); window.location.href = '/profil'; }}
+                        Mes Réservations
+                      </Link>
+                      
+                      <Link
+                        to="/profil"
+                        onClick={() => setShowAccountMenu(false)}
                         className="w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-50 text-sm font-medium flex items-center gap-2 border-t border-gray-100 mt-2"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2" /></svg>
                         Settings
+                      </Link>
+                      
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 text-sm font-medium border-t border-gray-100 mt-2"
+                      >
+                        Déconnexion
                       </button>
                     </div>
                   )}
@@ -189,6 +200,14 @@ export default function Header() {
                       onClick={() => { setIsMenuOpen(false); handleNavClick(); }}
                     >
                       <Heart className="h-5 w-5" />
+                    </Link>
+                    
+                    <Link
+                      to="/mes-reservations"
+                      className="block w-full text-center border border-blue-600 text-blue-600 px-3 py-2 rounded-full text-base font-medium hover:bg-blue-50 transition-colors flex items-center justify-center"
+                      onClick={() => { setIsMenuOpen(false); handleNavClick(); }}
+                    >
+                      Mes Réservations
                     </Link>
                     <div className="relative">
                       <button

@@ -1,25 +1,107 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Users, Calendar, Star, Check } from 'lucide-react';
+import { ArrowLeft, MapPin, Users, Calendar, Star, Check, Ship, Ruler, Euro, Loader2, MessageSquare } from 'lucide-react';
 import StarRating from '../components/StarRating';
-import { boats, testimonials } from '../data/boats';
+import AddReview from '../components/AddReview';
+import ReviewCard from '../components/ReviewCard';
 
 export default function BoatDetail() {
   const { id } = useParams();
-  const boat = boats.find(b => b.id === parseInt(id));
+  const [boat, setBoat] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   
-  const [reviewForm, setReviewForm] = useState({
-    prenom: '',
-    email: '',
-    message: '',
-    rating: 5
-  });
+  const [reviews, setReviews] = useState([]);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
 
-  if (!boat) {
+  // Récupérer les détails du bateau depuis l'API
+  useEffect(() => {
+    fetchBoatDetails();
+    fetchReviews();
+  }, [id]);
+
+  const fetchBoatDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`http://localhost:3001/api/boats/${id}`);
+      
+      if (!response.ok) {
+        throw new Error('Bateau non trouvé');
+      }
+
+      const data = await response.json();
+      setBoat(data);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/reviews/boat/${id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setReviews(data.data || []);
+        setAverageRating(data.averageRating || 0);
+        setTotalReviews(data.total || 0);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération des avis:', error);
+    }
+  };
+
+  const handleAddReview = () => {
+    setShowReviewModal(true);
+  };
+
+  const handleReviewAdded = (review) => {
+    // Rafraîchir la liste des avis
+    fetchReviews();
+    setShowReviewModal(false);
+  };
+
+  const handleReviewModalClose = () => {
+    setShowReviewModal(false);
+  };
+
+  const handleHelpfulClick = async (reviewId) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/reviews/${reviewId}/helpful`, {
+        method: 'PUT'
+      });
+      
+      if (response.ok) {
+        // Rafraîchir la liste des avis pour mettre à jour le compteur
+        fetchReviews();
+      }
+    } catch (error) {
+      console.error('Erreur lors du marquage utile:', error);
+    }
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Bateau non trouvé</h2>
+          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Chargement du bateau...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !boat) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
+        <div className="text-center">
+          <Ship className="h-16 w-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            {error || 'Bateau non trouvé'}
+          </h2>
           <Link to="/bateaux" className="text-blue-600 hover:text-blue-700">
             Retourner à la liste des bateaux
           </Link>
@@ -27,17 +109,6 @@ export default function BoatDetail() {
       </div>
     );
   }
-
-  const handleReviewSubmit = (e) => {
-    e.preventDefault();
-    console.log('Review submitted:', reviewForm);
-    alert('Merci pour votre avis !');
-    setReviewForm({ prenom: '', email: '', message: '', rating: 5 });
-  };
-
-  const handleInputChange = (field, value) => {
-    setReviewForm(prev => ({ ...prev, [field]: value }));
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
@@ -51,15 +122,15 @@ export default function BoatDetail() {
             <ArrowLeft size={20} />
             <span>Retour aux bateaux</span>
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">{boat.name}</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{boat.nom}</h1>
           <div className="flex items-center space-x-4 mt-2">
             <div className="flex items-center space-x-1">
-              <StarRating rating={boat.rating} />
-              <span className="text-sm text-gray-600">({boat.reviews} avis)</span>
+              <StarRating rating={boat.rating || 0} />
+              <span className="text-sm text-gray-600">({boat.reviews || 0} avis)</span>
             </div>
             <div className="flex items-center space-x-1 text-sm text-gray-600">
               <MapPin size={16} />
-              <span>{boat.location}</span>
+              <span className="capitalize">{boat.type}</span>
             </div>
           </div>
         </div>
@@ -73,18 +144,22 @@ export default function BoatDetail() {
             <div className="relative">
               <img
                 src={boat.image}
-                alt={boat.name}
+                alt={boat.nom}
                 className="w-full h-96 object-cover rounded-lg shadow-lg"
               />
               <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded-md font-medium">
-                {boat.category}
+                {boat.type}
               </div>
             </div>
 
             {/* Details */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Description</h2>
-              <p className="text-gray-600 mb-6">{boat.description}</p>
+              {boat.description ? (
+                <p className="text-gray-600 mb-6">{boat.description}</p>
+              ) : (
+                <p className="text-gray-500 italic mb-6">Aucune description disponible pour ce bateau.</p>
+              )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -92,165 +167,136 @@ export default function BoatDetail() {
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center space-x-2">
                       <Users size={16} className="text-blue-600" />
-                      <span>Capacité : {boat.capacity} personnes</span>
+                      <span>Capacité : {boat.capacite} personnes</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Ruler size={16} className="text-blue-600" />
+                      <span>Longueur : {boat.longueur}m</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <MapPin size={16} className="text-blue-600" />
-                      <span>Localisation : {boat.location}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Calendar size={16} className="text-blue-600" />
-                      <span>Disponible toute l'année</span>
+                      <span>Localisation : {boat.localisation}</span>
                     </div>
                   </div>
                 </div>
-                
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Équipements</h3>
-                  <div className="space-y-2">
-                    {boat.features.map((feature, index) => (
-                      <div key={index} className="flex items-center space-x-2 text-sm">
-                        <Check size={16} className="text-green-600" />
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Reviews */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Avis clients</h2>
-              <div className="space-y-6">
-                {testimonials.map((testimonial) => (
-                  <div key={testimonial.id} className="border-b border-gray-200 pb-6 last:border-b-0">
-                    <div className="flex items-center mb-3">
-                      <img
-                        src={testimonial.avatar}
-                        alt={testimonial.name}
-                        className="w-10 h-10 rounded-full object-cover mr-3"
-                      />
-                      <div>
-                        <h4 className="font-semibold text-gray-900">{testimonial.name}</h4>
-                        <StarRating rating={testimonial.rating} size={14} />
-                      </div>
+                {boat.equipements && boat.equipements.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-3">Équipements</h3>
+                    <div className="space-y-2 text-sm">
+                      {boat.equipements.map((equipment, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <Check size={16} className="text-green-600" />
+                          <span>{equipment}</span>
+                        </div>
+                      ))}
                     </div>
-                    <p className="text-gray-600 italic">"{testimonial.comment}"</p>
                   </div>
-                ))}
+                )}
               </div>
-            </div>
-
-            {/* Review Form */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Laisser un avis</h2>
-              <form onSubmit={handleReviewSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Prénom
-                    </label>
-                    <input
-                      type="text"
-                      value={reviewForm.prenom}
-                      onChange={(e) => handleInputChange('prenom', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      value={reviewForm.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Note
-                  </label>
-                  <StarRating
-                    rating={reviewForm.rating}
-                    size={24}
-                    interactive={true}
-                    onRatingChange={(rating) => handleInputChange('rating', rating)}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Message
-                  </label>
-                  <textarea
-                    value={reviewForm.message}
-                    onChange={(e) => handleInputChange('message', e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Partagez votre expérience..."
-                    required
-                  />
-                </div>
-                
-                <button
-                  type="submit"
-                  className="bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700 transition-colors"
-                >
-                  Envoyer l'avis
-                </button>
-              </form>
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Booking Card */}
+          {/* Sidebar - Réservation */}
+          <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
               <div className="text-center mb-6">
                 <div className="text-3xl font-bold text-blue-600 mb-2">
-                  {boat.price}€
-                  <span className="text-lg font-normal text-gray-600">/jour</span>
+                  {boat.prix_jour}€
                 </div>
-                <div className="flex items-center justify-center space-x-1">
-                  <StarRating rating={boat.rating} />
-                  <span className="text-sm text-gray-600">({boat.reviews} avis)</span>
-                </div>
+                <div className="text-gray-600">par jour</div>
               </div>
-              
-              <button className="w-full bg-orange-600 text-white py-3 px-6 rounded-md font-medium hover:bg-orange-700 transition-colors mb-4">
-                Réserver maintenant
-              </button>
-              
-              <div className="text-center text-sm text-gray-500">
-                <p>Annulation gratuite jusqu'à 48h avant</p>
-                <p>Paiement sécurisé</p>
-              </div>
-            </div>
 
-            {/* Contact Info */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Besoin d'aide ?</h3>
-              <div className="space-y-3 text-sm">
-                <p className="text-gray-600">
-                  Notre équipe est là pour vous accompagner
-                </p>
-                <div className="space-y-2">
-                  <p><strong>Téléphone :</strong> +33 2 99 40 78 90</p>
-                  <p><strong>Email :</strong> contact@sailingloc.com</p>
-                  <p><strong>Horaires :</strong> Lun-Sam 9h-18h</p>
+              <div className="space-y-4 mb-6">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Capacité</span>
+                  <span className="font-medium">{boat.capacite} personnes</span>
                 </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Type</span>
+                  <span className="font-medium capitalize">{boat.type}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Longueur</span>
+                  <span className="font-medium">{boat.longueur}m</span>
+                </div>
+              </div>
+
+              <Link
+                to={`/reservation/${id}`}
+                className="w-full bg-orange-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-orange-600 transition-colors flex items-center justify-center"
+              >
+                Réserver ce bateau
+              </Link>
+
+              <div className="text-center mt-4">
+                <p className="text-xs text-gray-500">
+                  Réservation sécurisée • Annulation gratuite
+                </p>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Section des avis */}
+        <div className="mt-8">
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <MessageSquare className="h-6 w-6 text-blue-600" />
+                  Avis des clients
+                </h2>
+                <div className="flex items-center space-x-4 mt-2">
+                  <div className="flex items-center space-x-1">
+                    <StarRating rating={averageRating} size={20} />
+                    <span className="text-sm text-gray-600">({totalReviews} avis)</span>
+                  </div>
+                  {averageRating > 0 && (
+                    <span className="text-sm text-gray-500">
+                      Note moyenne : {averageRating.toFixed(1)}/5
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={handleAddReview}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Laisser un avis
+              </button>
+            </div>
+
+            {/* Liste des avis existants */}
+            <div className="space-y-4">
+              {reviews.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <MessageSquare size={48} className="mx-auto mb-2 text-gray-300" />
+                  <p>Aucun avis pour le moment</p>
+                  <p className="text-sm">Soyez le premier à laisser un avis !</p>
+                </div>
+              ) : (
+                reviews.map((review) => (
+                  <ReviewCard
+                    key={review._id}
+                    review={review}
+                    onHelpfulClick={handleHelpfulClick}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Modal d'ajout d'avis */}
+      <AddReview
+        isOpen={showReviewModal}
+        onClose={handleReviewModalClose}
+        onReviewAdded={handleReviewAdded}
+        boatData={boat}
+      />
     </div>
   );
 }

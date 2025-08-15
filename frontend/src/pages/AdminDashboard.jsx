@@ -68,11 +68,80 @@ export default function AdminDashboard() {
 
       const data = await response.json();
       
+      // Récupérer les vraies données des bateaux
+      let boatsData = [];
+      try {
+        const boatsResponse = await fetch('http://localhost:3001/api/boats', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (boatsResponse.ok) {
+          const boatsResult = await boatsResponse.json();
+          boatsData = boatsResult || []; // L'API retourne directement le tableau
+          console.log(`Récupération de ${boatsData.length} bateaux depuis la base de données`);
+        } else {
+          console.log('Erreur API bateaux:', boatsResponse.status, boatsResponse.statusText);
+        }
+      } catch (error) {
+        console.log('API des bateaux non disponible:', error.message);
+      }
+
+      // Récupérer les vraies données des réservations
+      let bookingsData = [];
+      try {
+        const bookingsResponse = await fetch('http://localhost:3001/api/bookings', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (bookingsResponse.ok) {
+          const bookingsResult = await bookingsResponse.json();
+          bookingsData = bookingsResult.bookings || [];
+          console.log(`Récupération de ${bookingsData.length} réservations depuis la base de données`);
+        } else {
+          console.log('Erreur API réservations:', bookingsResponse.status, bookingsResponse.statusText);
+        }
+      } catch (error) {
+        console.log('API des réservations non disponible:', error.message);
+      }
+
+      // Calculer les vraies statistiques
+      const totalBoats = boatsData.length;
+      const totalBookings = bookingsData.length;
+      const totalRevenue = bookingsData.reduce((sum, booking) => {
+        // Calculer le revenu basé sur le prix et la durée des réservations
+        if (booking.prix_jour && booking.dateDebut && booking.dateFin) {
+          const startDate = new Date(booking.dateDebut);
+          const endDate = new Date(booking.dateFin);
+          const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+          return sum + (booking.prix_jour * days);
+        } else if (booking.prix_total) {
+          // Si on a directement le prix total
+          return sum + booking.prix_total;
+        }
+        return sum;
+      }, 0);
+
+      // Afficher des messages informatifs si les données ne sont pas disponibles
+      if (boatsData.length === 0) {
+        console.log('Aucun bateau trouvé dans la base de données');
+      } else {
+        console.log('Bateaux récupérés:', boatsData.map(b => ({ nom: b.nom, type: b.type, prix: b.prix_jour })));
+      }
+      if (bookingsData.length === 0) {
+        console.log('Aucune réservation trouvée dans la base de données');
+      }
+      
       setStats({
         totalUsers: data.stats.totalUsers,
-        totalBoats: 89, // À connecter avec l'API des bateaux
-        totalBookings: 234, // À connecter avec l'API des réservations
-        totalRevenue: 45600 // À connecter avec l'API des paiements
+        totalBoats: totalBoats,
+        totalBookings: totalBookings,
+        totalRevenue: totalRevenue
       });
 
       setUsers(data.recentUsers.map(user => ({
@@ -81,15 +150,23 @@ export default function AdminDashboard() {
         prenom: user.prenom,
         email: user.email,
         role: user.role,
-        status: 'active'
+        status: user.status || 'actif',
+        tel: user.tel || ''
       })));
 
-      // Données simulées pour les bateaux (à connecter avec l'API)
-      setBoats([
-        { id: 1, nom: 'Voilier Élégance', proprietaire: 'Marie Martin', status: 'disponible', prix: 150 },
-        { id: 2, nom: 'Catamaran Horizon', proprietaire: 'Jean Dupont', status: 'loué', prix: 200 },
-        { id: 3, nom: 'Yacht Royal', proprietaire: 'Pierre Bernard', status: 'maintenance', prix: 500 }
-      ]);
+      // Utiliser les vraies données des bateaux
+      setBoats(boatsData.map(boat => ({
+        id: boat._id,
+        nom: boat.nom,
+        type: boat.type,
+        longueur: boat.longueur,
+        capacite: boat.capacite,
+        prix: boat.prix_jour,
+        localisation: boat.localisation,
+        status: boat.disponible ? 'disponible' : 'indisponible',
+        image: boat.image,
+        createdAt: boat.createdAt
+      })));
     } catch (error) {
       toast.error('Erreur lors du chargement des données');
       console.error(error);
@@ -300,13 +377,23 @@ export default function AdminDashboard() {
               <h1 className="text-3xl font-bold text-gray-900">Tableau de Bord Admin</h1>
               <p className="text-gray-600">Gestion de la plateforme SailingLoc</p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              <LogOut className="h-5 w-5 mr-2" />
-              Déconnexion
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={fetchDashboardData}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                title="Rafraîchir les données"
+              >
+                <BarChart3 className="h-5 w-5 mr-2" />
+                Actualiser
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <LogOut className="h-5 w-5 mr-2" />
+                Déconnexion
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -408,25 +495,25 @@ export default function AdminDashboard() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Activité récente</h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-3">Nouveaux utilisateurs</h4>
+                    <h4 className="font-medium text-gray-900 mb-3">Utilisateurs récents</h4>
                     <div className="space-y-2">
                       {users.slice(0, 3).map(user => (
                         <div key={user.id} className="flex items-center justify-between">
                           <span className="text-sm text-gray-600">
                             {user.prenom} {user.nom} ({user.role})
                           </span>
-                          <span className="text-xs text-gray-400">Aujourd'hui</span>
+                          <span className="text-xs text-gray-400">{user.email}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-3">Nouveaux bateaux</h4>
+                    <h4 className="font-medium text-gray-900 mb-3">Bateaux disponibles</h4>
                     <div className="space-y-2">
                       {boats.slice(0, 3).map(boat => (
                         <div key={boat.id} className="flex items-center justify-between">
                           <span className="text-sm text-gray-600">{boat.nom}</span>
-                          <span className="text-xs text-gray-400">{boat.prix}€/jour</span>
+                          <span className="text-xs text-gray-400">{boat.prix}€/jour - {boat.type}</span>
                         </div>
                       ))}
                     </div>
@@ -490,7 +577,12 @@ export default function AdminDashboard() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              user.status === 'actif' ? 'bg-green-100 text-green-800' :
+                              user.status === 'inactif' ? 'bg-red-100 text-red-800' :
+                              user.status === 'suspendu' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
                               {user.status}
                             </span>
                           </td>
@@ -545,7 +637,13 @@ export default function AdminDashboard() {
                           Bateau
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Propriétaire
+                          Type
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Longueur
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Capacité
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Prix/jour
@@ -565,7 +663,13 @@ export default function AdminDashboard() {
                             <div className="text-sm font-medium text-gray-900">{boat.nom}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{boat.proprietaire}</div>
+                            <div className="text-sm text-gray-900 capitalize">{boat.type}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{boat.longueur}m</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{boat.capacite} pers.</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{boat.prix}€</div>
@@ -574,7 +678,9 @@ export default function AdminDashboard() {
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               boat.status === 'disponible' ? 'bg-green-100 text-green-800' :
                               boat.status === 'loué' ? 'bg-blue-100 text-blue-800' :
-                              'bg-yellow-100 text-yellow-800'
+                              boat.status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
+                              boat.status === 'réservé' ? 'bg-purple-100 text-purple-800' :
+                              'bg-gray-100 text-gray-800'
                             }`}>
                               {boat.status}
                             </span>

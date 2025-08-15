@@ -13,25 +13,26 @@ router.post('/', protect, async (req, res) => {
     const { boatId, bookingId, rating, comment, images } = req.body;
     const userId = req.user.id;
 
-    // Vérifier si l'utilisateur peut laisser un avis
-    const canReview = await Review.canUserReview(userId, boatId, bookingId);
-    if (!canReview) {
-      return res.status(400).json({ 
-        message: 'Vous ne pouvez laisser un avis que pour une réservation terminée' 
-      });
-    }
-
-    // Vérifier si l'utilisateur a déjà laissé un avis pour cette réservation
+    // Vérifier si l'utilisateur a déjà laissé un avis pour ce bateau
     const existingReview = await Review.findOne({ 
       userId, 
-      boatId, 
-      bookingId 
+      boatId
     });
 
     if (existingReview) {
       return res.status(400).json({ 
-        message: 'Vous avez déjà laissé un avis pour cette réservation' 
+        message: 'Vous avez déjà laissé un avis pour ce bateau' 
       });
+    }
+
+    // Vérifier que la réservation existe et appartient à l'utilisateur
+    if (bookingId) {
+      const booking = await Booking.findById(bookingId);
+      if (!booking || booking.userId.toString() !== userId) {
+        return res.status(400).json({ 
+          message: 'Réservation invalide' 
+        });
+      }
     }
 
     const review = new Review({
@@ -235,6 +236,59 @@ router.delete('/:id', protect, async (req, res) => {
   }
 });
 
+// @desc    Obtenir les avis récents pour la page d'accueil
+// @route   GET /api/reviews/recent
+// @access  Public
+router.get('/recent', async (req, res) => {
+  try {
+    const { limit = 6, rating } = req.query;
+    
+    let query = {};
+    if (rating) {
+      query.rating = parseInt(rating);
+    }
+    
+    const reviews = await Review.find(query)
+      .populate('userId', 'nom prenom')
+      .populate('boatId', 'nom image localisation type')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
+
+    res.json({
+      success: true,
+      count: reviews.length,
+      data: reviews
+    });
+  } catch (error) {
+    console.error('Erreur récupération avis récents:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// @desc    Obtenir les meilleurs avis (5 étoiles) pour la page d'accueil
+// @route   GET /api/reviews/top
+// @access  Public
+router.get('/top', async (req, res) => {
+  try {
+    const { limit = 3 } = req.query;
+    
+    const reviews = await Review.find({ rating: 5 })
+      .populate('userId', 'nom prenom')
+      .populate('boatId', 'nom image localisation type')
+      .sort({ createdAt: -1 }) // Tri par date de création décroissante (plus récent en premier)
+      .limit(parseInt(limit));
+
+    res.json({
+      success: true,
+      count: reviews.length,
+      data: reviews
+    });
+  } catch (error) {
+    console.error('Erreur récupération meilleurs avis:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 // @desc    Obtenir tous les avis (Admin)
 // @route   GET /api/reviews
 // @access  Private/Admin
@@ -250,7 +304,7 @@ router.get('/', protect, authorize('admin'), async (req, res) => {
     
     const reviews = await Review.find(query)
       .populate('userId', 'nom prenom email')
-      .populate('boatId', 'name images')
+      .populate('boatId', 'nom image localisation')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));

@@ -58,7 +58,9 @@ router.post('/', protect, async (req, res) => {
       endDate,
       numberOfGuests,
       specialRequests,
-      totalPrice
+      totalPrice,
+      status: 'completed', // Statut automatiquement completed pour permettre les avis
+      paymentStatus: 'paid' // Statut de paiement automatiquement paid
     });
 
     await booking.save();
@@ -192,6 +194,35 @@ router.get('/', protect, authorize('admin'), async (req, res) => {
     });
   } catch (error) {
     console.error('Erreur récupération réservations admin:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// @desc    Mettre à jour automatiquement le statut des réservations passées
+// @route   PUT /api/bookings/update-status
+// @access  Private/Admin
+router.put('/update-status', protect, authorize('admin'), async (req, res) => {
+  try {
+    const now = new Date();
+    
+    // Mettre à jour les réservations passées en 'completed'
+    const result = await Booking.updateMany(
+      {
+        status: { $in: ['pending', 'confirmed'] },
+        endDate: { $lt: now }
+      },
+      {
+        $set: { status: 'completed' }
+      }
+    );
+
+    res.json({
+      success: true,
+      message: `${result.modifiedCount} réservations mises à jour en 'completed'`,
+      updatedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Erreur mise à jour automatique des statuts:', error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });

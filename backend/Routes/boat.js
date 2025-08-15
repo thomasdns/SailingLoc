@@ -22,105 +22,184 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/boats/my-boats - Récupérer les bateaux du propriétaire connecté
+router.get('/my-boats', protect, authorize('proprietaire', 'admin'), async (req, res) => {
+  try {
+    const boats = await Boat.find({ proprietaire: req.user.id })
+      .populate('proprietaire', 'nom prenom email')
+      .sort({ createdAt: -1 });
+
+    res.json(boats);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des bateaux:', error);
+    res.status(500).json({ 
+      message: 'Erreur serveur lors de la récupération des bateaux',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Erreur interne'
+    });
+  }
+});
+
+// GET /api/boats/:id - Récupérer un bateau spécifique
+router.get('/:id', async (req, res) => {
+  try {
+    const boat = await Boat.findById(req.params.id)
+      .populate('proprietaire', 'nom prenom email');
+
+    if (!boat) {
+      return res.status(404).json({ 
+        message: 'Bateau non trouvé' 
+      });
+    }
+
+    res.json(boat);
+  } catch (error) {
+    console.error('Erreur lors de la récupération du bateau:', error);
+    
+    if (error.kind === 'ObjectId') {
+      return res.status(400).json({ 
+        message: 'ID de bateau invalide' 
+      });
+    }
+
+    res.status(500).json({ 
+      message: 'Erreur serveur lors de la récupération du bateau',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Erreur interne'
+    });
+  }
+});
+
 // POST /api/boats - Ajouter un nouveau bateau (propriétaire ou admin uniquement)
 router.post('/', requireJsonContent, protect, authorize('proprietaire', 'admin'), async (req, res) => {
   try {
-    const { nom, type, longueur, prix_jour, capacite, image, localisation } = req.body;
+    const { nom, type, longueur, prix_jour, capacite, image, localisation, description, equipements } = req.body;
+    const proprietaire = req.user.id; // ID de l'utilisateur connecté
 
-    // --- VALIDATIONS / CONTRAINTES ---
-    // Vérification stricte des types
-    if (typeof nom !== 'string') {
-      return res.status(400).json({ message: 'Le champ nom doit être une chaîne de caractères.' });
+    // Validation des champs requis
+    if (!nom || !type || !longueur || !prix_jour || !capacite || !image || !localisation) {
+      return res.status(400).json({ 
+        message: 'Les champs nom, type, longueur, prix_jour, capacite, image et localisation sont obligatoires.' 
+      });
     }
-    if (typeof type !== 'string') {
-      return res.status(400).json({ message: 'Le champ type doit être une chaîne de caractères.' });
-    }
-    if (typeof longueur !== 'number' || isNaN(longueur)) {
-      return res.status(400).json({ message: 'Le champ longueur doit être un nombre.' });
-    }
-    if (typeof prix_jour !== 'number' || isNaN(prix_jour)) {
-      return res.status(400).json({ message: 'Le champ prix_jour doit être un nombre.' });
-    }
-    if (typeof capacite !== 'number' || isNaN(capacite) || !Number.isInteger(capacite)) {
-      return res.status(400).json({ message: 'Le champ capacite doit être un entier.' });
-    }
-    if (typeof image !== 'string') {
-      return res.status(400).json({ message: 'Le champ image doit être une chaîne de caractères.' });
-    }
-    if (typeof localisation !== 'string') {
-      return res.status(400).json({ message: 'Le champ localisation doit être une chaîne de caractères.' });
-    }
-    // Trim automatique des champs texte
-    const nomTrim = typeof nom === 'string' ? nom.trim() : '';
-    const typeTrim = typeof type === 'string' ? type.trim() : '';
-    const imageTrim = typeof image === 'string' ? image.trim() : '';
-    const localisationTrim = typeof localisation === 'string' ? localisation.trim() : '';
 
-    // nom : longueur min/max, pas de caractères spéciaux, première lettre en majuscule
-    const nomFormat = nomTrim.charAt(0).toUpperCase() + nomTrim.slice(1);
-    if (nomFormat.length < 2 || nomFormat.length > 100) {
-      return res.status(400).json({ message: "Le nom du bateau doit contenir entre 2 et 100 caractères." });
+    // Validation des types
+    if (typeof nom !== 'string' || typeof type !== 'string' || typeof image !== 'string' || typeof localisation !== 'string') {
+      return res.status(400).json({ 
+        message: 'Les champs nom, type, image et localisation doivent être des chaînes de caractères.' 
+      });
     }
-    if (!/^[a-zA-Z0-9 \-']+$/.test(nomFormat)) {
-      return res.status(400).json({ message: "Le nom du bateau contient des caractères non autorisés (lettres, chiffres, espaces, tirets, apostrophes uniquement)." });
+
+    if (typeof longueur !== 'number' || typeof prix_jour !== 'number' || typeof capacite !== 'number') {
+      return res.status(400).json({ 
+        message: 'Les champs longueur, prix_jour et capacite doivent être des nombres.' 
+      });
     }
-    // type : insensible à la casse, doit être dans l'énum du modèle
-    const typeLower = typeTrim.toLowerCase();
-    const typesAutorises = ['voilier', 'bateau à moteur'];
-    if (!typesAutorises.includes(typeLower)) {
-      return res.status(400).json({ message: `Le type doit être l'un des suivants : ${typesAutorises.join(', ')}` });
+
+    // Validation des valeurs
+    if (nom.trim().length < 2 || nom.trim().length > 100) {
+      return res.status(400).json({ 
+        message: 'Le nom du bateau doit contenir entre 2 et 100 caractères.' 
+      });
     }
-    // longueur : nombre > 0, min 2, max 100
-    if (typeof longueur !== 'number' || longueur <= 0 || longueur < 2 || longueur > 100) {
-      return res.status(400).json({ message: "La longueur du bateau doit être un nombre positif entre 2 et 100 mètres." });
+
+    if (!['voilier', 'bateau à moteur', 'catamaran'].includes(type.toLowerCase())) {
+      return res.status(400).json({ 
+        message: 'Le type doit être voilier, bateau à moteur ou catamaran.' 
+      });
     }
-    // prix_jour : nombre > 0
-    if (typeof prix_jour !== 'number' || prix_jour <= 0) {
-      return res.status(400).json({ message: "Le prix par jour doit être un nombre supérieur à 0." });
+
+    if (longueur < 2 || longueur > 100) {
+      return res.status(400).json({ 
+        message: 'La longueur doit être entre 2 et 100 mètres.' 
+      });
     }
-    // capacite : entier > 0
-    if (!Number.isInteger(capacite) || capacite <= 0) {
-      return res.status(400).json({ message: "La capacité doit être un entier positif supérieur à 0." });
+
+    if (prix_jour <= 0) {
+      return res.status(400).json({ 
+        message: 'Le prix par jour doit être supérieur à 0.' 
+      });
     }
-    // Cohérence capacité/longueur (ex: capacité <= longueur*2)
-    if (capacite > longueur * 2) {
-      return res.status(400).json({ message: `La capacité (${capacite}) est trop élevée pour la longueur du bateau (${longueur}m). Maximum autorisé : ${longueur*2}` });
+
+    if (capacite < 1 || capacite > 50) {
+      return res.status(400).json({ 
+        message: 'La capacité doit être entre 1 et 50 personnes.' 
+      });
     }
-    // image : chemin absolu (/, C:/, file:///), extension jpg/png/jpeg/gif/webp
-    if (
-      typeof imageTrim !== 'string' ||
-      !(imageTrim.startsWith('/') || imageTrim.startsWith('C:/') || imageTrim.startsWith('file:///')) ||
-      !/\.(jpg|jpeg|png|gif|webp)$/i.test(imageTrim)
-    ) {
-      return res.status(400).json({ message: "L'image doit être un chemin absolu valide et avoir une extension .jpg, .jpeg, .png, .gif ou .webp." });
+
+    // Validation de l'image (URL Firebase ou chemin local)
+    if (!image.trim()) {
+      return res.status(400).json({ 
+        message: 'L\'image est obligatoire.' 
+      });
     }
-    // localisation : format 'longitude,latitude'
-    if (
-      typeof localisationTrim !== 'string' ||
-      !/^-?\d{1,3}\.\d+,-?\d{1,3}\.\d+$/.test(localisationTrim)
-    ) {
-      return res.status(400).json({ message: "La localisation doit être au format 'longitude,latitude' (ex: 43.51246,5.124885)." });
+
+    // Validation du format de l'image
+    const isValidImageUrl = image.trim().startsWith('https://firebasestorage.googleapis.com') ||
+                           image.trim().startsWith('http://') ||
+                           image.trim().startsWith('https://') ||
+                           image.trim().startsWith('/') ||
+                           image.trim().startsWith('C:/');
+
+    if (!isValidImageUrl) {
+      return res.status(400).json({ 
+        message: 'L\'image doit être une URL valide ou un chemin local.' 
+      });
     }
-    // Vérifier si un bateau avec ce nom ET cette localisation existe déjà
-    const existingBoat = await Boat.findOne({ nom: nomFormat, localisation: localisationTrim });
+
+    // Validation de la localisation (format: "longitude,latitude")
+    if (!/^-?\d{1,3}\.\d+,-?\d{1,3}\.\d+$/.test(localisation.trim())) {
+      return res.status(400).json({ 
+        message: 'La localisation doit être au format "longitude,latitude" (ex: 43.51246,5.124885).' 
+      });
+    }
+
+    // Vérifier si un bateau avec ce nom existe déjà
+    const existingBoat = await Boat.findOne({ nom: nom.trim() });
     if (existingBoat) {
-      return res.status(409).json({ message: "Un bateau avec ce nom et cette localisation existe déjà." });
+      return res.status(400).json({ 
+        message: 'Un bateau avec ce nom existe déjà.' 
+      });
     }
-    // --- FIN VALIDATIONS ---
-    const nouveauBateau = new Boat({ nom: nomFormat, type: typeLower, longueur, prix_jour, capacite, image: imageTrim, localisation: localisationTrim });
-    const bateauCree = await nouveauBateau.save();
-    res.status(201).json({
-      id: bateauCree._id,
-      nom: bateauCree.nom,
-      type: bateauCree.type,
-      longueur: bateauCree.longueur,
-      prix_jour: bateauCree.prix_jour,
-      capacite: bateauCree.capacite,
-      image: bateauCree.image,
-      localisation: bateauCree.localisation
+
+    // Créer le nouveau bateau
+    const newBoat = new Boat({
+      nom: nom.trim(),
+      type: type.toLowerCase(),
+      longueur,
+      prix_jour,
+      capacite,
+      image: image.trim(),
+      localisation: localisation.trim(),
+      description: description ? description.trim() : '',
+      equipements: equipements && Array.isArray(equipements) ? equipements : [],
+      proprietaire
     });
+
+    // Sauvegarder dans MongoDB
+    const savedBoat = await newBoat.save();
+
+    // Populate les informations du propriétaire
+    await savedBoat.populate('proprietaire', 'nom prenom email');
+
+    res.status(201).json({
+      success: true,
+      message: 'Bateau ajouté avec succès',
+      data: savedBoat
+    });
+
   } catch (error) {
-    res.status(400).json({ message: "Erreur lors de l'ajout du bateau", error });
+    console.error('Erreur lors de l\'ajout du bateau:', error);
+    
+    // Gestion des erreurs MongoDB
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        message: 'Un bateau avec ce nom existe déjà.' 
+      });
+    }
+
+    res.status(500).json({ 
+      message: 'Erreur serveur lors de l\'ajout du bateau',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Erreur interne'
+    });
   }
 });
 

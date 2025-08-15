@@ -1,16 +1,42 @@
-import React, { useState } from 'react';
-import { Filter, Grid, List } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Filter, Grid, List, Ship } from 'lucide-react';
 import BoatCard from '../components/BoatCard';
-import { boats } from '../data/boats';
 
 export default function Boats() {
-  const [filteredBoats, setFilteredBoats] = useState(boats);
+  const [boats, setBoats] = useState([]);
+  const [filteredBoats, setFilteredBoats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [filters, setFilters] = useState({
     type: '',
     priceRange: '',
     capacity: ''
   });
   const [viewMode, setViewMode] = useState('grid');
+
+  // Récupérer tous les bateaux depuis l'API
+  useEffect(() => {
+    fetchBoats();
+  }, []);
+
+  const fetchBoats = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:3001/api/boats');
+      
+      if (!response.ok) {
+        throw new Error('Erreur lors de la récupération des bateaux');
+      }
+
+      const data = await response.json();
+      setBoats(data);
+      setFilteredBoats(data);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFilterChange = (filterType, value) => {
     const newFilters = { ...filters, [filterType]: value };
@@ -20,19 +46,19 @@ export default function Boats() {
     
     if (newFilters.type) {
       filtered = filtered.filter(boat => 
-        boat.category.toLowerCase().includes(newFilters.type.toLowerCase())
+        boat.type.toLowerCase().includes(newFilters.type.toLowerCase())
       );
     }
     
     if (newFilters.priceRange) {
       const [min, max] = newFilters.priceRange.split('-').map(Number);
       filtered = filtered.filter(boat => 
-        boat.price >= min && (max ? boat.price <= max : true)
+        boat.prix_jour >= min && (max ? boat.prix_jour <= max : true)
       );
     }
     
     if (newFilters.capacity) {
-      filtered = filtered.filter(boat => boat.capacity >= parseInt(newFilters.capacity));
+      filtered = filtered.filter(boat => boat.capacite >= parseInt(newFilters.capacity));
     }
     
     setFilteredBoats(filtered);
@@ -42,6 +68,29 @@ export default function Boats() {
     setFilters({ type: '', priceRange: '', capacity: '' });
     setFilteredBoats(boats);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement des bateaux...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
+        <div className="text-center">
+          <Ship className="h-16 w-16 text-red-400 mx-auto mb-4" />
+          <h3 className="text-xl font-medium text-gray-600 mb-2">Erreur de chargement</h3>
+          <p className="text-gray-500">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
@@ -105,15 +154,14 @@ export default function Boats() {
                   >
                     <option value="">Tous les types</option>
                     <option value="voilier">Voilier</option>
-                    <option value="yacht">Yacht</option>
+                    <option value="bateau à moteur">Bateau à moteur</option>
                     <option value="catamaran">Catamaran</option>
-                    <option value="moteur">Bateau à moteur</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prix par jour
+                    Fourchette de prix
                   </label>
                   <select
                     value={filters.priceRange}
@@ -121,16 +169,17 @@ export default function Boats() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Tous les prix</option>
-                    <option value="0-300">0€ - 300€</option>
-                    <option value="300-600">300€ - 600€</option>
-                    <option value="600-1000">600€ - 1000€</option>
-                    <option value="1000">+ de 1000€</option>
+                    <option value="0-100">0€ - 100€</option>
+                    <option value="100-200">100€ - 200€</option>
+                    <option value="200-300">200€ - 300€</option>
+                    <option value="300-500">300€ - 500€</option>
+                    <option value="500-1000">500€+</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre de personnes
+                    Capacité minimale
                   </label>
                   <select
                     value={filters.capacity}
@@ -138,37 +187,30 @@ export default function Boats() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Toutes capacités</option>
+                    <option value="2">2+ personnes</option>
+                    <option value="4">4+ personnes</option>
                     <option value="6">6+ personnes</option>
                     <option value="8">8+ personnes</option>
                     <option value="10">10+ personnes</option>
-                    <option value="12">12+ personnes</option>
                   </select>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Boats Grid */}
+          {/* Boats Grid/List */}
           <div className="lg:w-3/4">
-            <div className={`grid gap-6 ${
-              viewMode === 'grid' 
-                ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' 
-                : 'grid-cols-1'
-            }`}>
-              {filteredBoats.map((boat) => (
-                <BoatCard key={boat.id} boat={boat} />
-              ))}
-            </div>
-            
-            {filteredBoats.length === 0 && (
+            {filteredBoats.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">Aucun bateau ne correspond à vos critères</p>
-                <button
-                  onClick={clearFilters}
-                  className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Effacer les filtres
-                </button>
+                <Ship className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-medium text-gray-600 mb-2">Aucun bateau trouvé</h3>
+                <p className="text-gray-500">Essayez de modifier vos filtres ou revenez plus tard.</p>
+              </div>
+            ) : (
+              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6' : 'space-y-4'}>
+                {filteredBoats.map((boat) => (
+                  <BoatCard key={boat._id} boat={boat} viewMode={viewMode} />
+                ))}
               </div>
             )}
           </div>

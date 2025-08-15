@@ -16,6 +16,8 @@ import PolitiqueConfidentialite from './pages/PolitiqueConfidentialite';
 import Profil from './pages/Profil';
 import CGU_CGV from './pages/CGU_CGV';
 import MentionsLegales from './pages/MentionsLegales';
+import Reservation from './pages/Reservation';
+import MesReservations from './pages/MesReservations';
 import ScrollToTop from './components/ScrollToTop';
 
 function App() {
@@ -29,6 +31,8 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/bateaux" element={<Boats />} />
             <Route path="/bateaux/:id" element={<BoatDetail />} />
+            <Route path="/reservation/:boatId" element={<Reservation />} />
+            <Route path="/mes-reservations" element={<MesReservations />} />
             <Route path="/a-propos" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/connexion" element={<Login />} />
