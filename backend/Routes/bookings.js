@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Booking from '../models/Booking.js';
 import { protect, authorize } from '../middleware/auth.js';
 
@@ -37,11 +38,18 @@ router.post('/', protect, async (req, res) => {
       return res.status(400).json({ message: 'Le bateau n\'est pas disponible pour ces dates' });
     }
 
-    // Calculer le prix total (à adapter selon votre logique de tarification)
+    // Calculer le prix total en récupérant le prix du bateau
     const start = new Date(startDate);
     const end = new Date(endDate);
     const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-    const totalPrice = days * 100; // Prix par jour (à adapter)
+    
+    // Récupérer le prix du bateau depuis la base de données
+    const boat = await mongoose.model('Boat').findById(boatId);
+    if (!boat) {
+      return res.status(404).json({ message: 'Bateau non trouvé' });
+    }
+    
+    const totalPrice = days * boat.prix_jour; // Prix par jour du bateau
 
     const booking = new Booking({
       userId,
