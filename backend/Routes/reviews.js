@@ -265,14 +265,14 @@ router.get('/recent', async (req, res) => {
   }
 });
 
-// @desc    Obtenir les meilleurs avis (5 étoiles) pour la page d'accueil
+// @desc    Obtenir les meilleurs avis (4+ étoiles) pour la page d'accueil
 // @route   GET /api/reviews/top
 // @access  Public
 router.get('/top', async (req, res) => {
   try {
     const { limit = 3 } = req.query;
     
-    const reviews = await Review.find({ rating: 5 })
+    const reviews = await Review.find({ rating: { $gte: 4 } })
       .populate('userId', 'nom prenom')
       .populate('boatId', 'nom image localisation type')
       .sort({ createdAt: -1 }) // Tri par date de création décroissante (plus récent en premier)
@@ -285,6 +285,30 @@ router.get('/top', async (req, res) => {
     });
   } catch (error) {
     console.error('Erreur récupération meilleurs avis:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// @desc    Obtenir les avis 5 étoiles pour la page d'accueil
+// @route   GET /api/reviews/five-stars
+// @access  Public
+router.get('/five-stars', async (req, res) => {
+  try {
+    const { limit = 6 } = req.query;
+    
+    const reviews = await Review.find({ rating: 5 })
+      .populate('userId', 'nom prenom')
+      .populate('boatId', 'nom image localisation type')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
+
+    res.json({
+      success: true,
+      count: reviews.length,
+      data: reviews
+    });
+  } catch (error) {
+    console.error('Erreur récupération avis 5 étoiles:', error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });

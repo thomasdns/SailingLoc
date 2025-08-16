@@ -10,6 +10,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [topReviews, setTopReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
 
   // Récupérer les bateaux et les avis depuis l'API
   useEffect(() => {
@@ -41,40 +42,32 @@ export default function Home() {
 
   const fetchTopReviews = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/reviews/top?limit=3');
+      setReviewsLoading(true);
+      console.log('🔄 Récupération des avis 5 étoiles depuis la table reviews...');
+      
+      const response = await fetch('http://localhost:3001/api/reviews/five-stars?limit=6');
+      console.log('📡 Réponse API avis 5 étoiles:', response.status, response.statusText);
+      
       if (response.ok) {
         const data = await response.json();
-        setTopReviews(data.data);
+        console.log('✅ Données avis 5 étoiles reçues depuis la table reviews:', data);
+        
+        if (data.data && data.data.length > 0) {
+          console.log(`📝 ${data.data.length} avis 5 étoiles trouvés dans la table reviews`);
+          setTopReviews(data.data);
+        } else {
+          console.log('⚠️ Aucun avis 5 étoiles trouvé dans la table reviews');
+          setTopReviews([]);
+        }
+      } else {
+        console.error('❌ Erreur API avis 5 étoiles:', response.status, response.statusText);
+        setTopReviews([]);
       }
     } catch (error) {
-      console.error('Erreur lors de la récupération des avis:', error);
-      // En cas d'erreur, on peut afficher des avis fictifs pour la démo
-      setTopReviews([
-        {
-          _id: 'demo1',
-          rating: 5,
-          comment: "Expérience exceptionnelle ! Le bateau était parfait et le service impeccable. Je recommande vivement pour vos escapades en mer.",
-          userId: { nom: 'Martin', prenom: 'Sophie' },
-          boatId: { nom: 'Voilier Élégance', type: 'voilier', localisation: 'Saint-Malo' },
-          createdAt: new Date()
-        },
-        {
-          _id: 'demo2',
-          rating: 5,
-          comment: "Un voyage de rêve ! L'équipage était aux petits soins et nous avons découvert des endroits magnifiques. À refaire absolument !",
-          userId: { nom: 'Dubois', prenom: 'Pierre' },
-          boatId: { nom: 'Catamaran Horizon', type: 'catamaran', localisation: 'Les Glénan' },
-          createdAt: new Date()
-        },
-        {
-          _id: 'demo3',
-          rating: 5,
-          comment: "Service client au top et bateau en parfait état. Nous avons passé une semaine inoubliable sur la Méditerranée. Merci SailingLoc !",
-          userId: { nom: 'Leroy', prenom: 'Marie' },
-          boatId: { nom: 'Yacht Prestige', type: 'yacht', localisation: 'Marseille' },
-          createdAt: new Date()
-        }
-      ]);
+      console.error('💥 Erreur réseau lors de la récupération des avis 5 étoiles:', error);
+      setTopReviews([]);
+    } finally {
+      setReviewsLoading(false);
     }
   };
 
@@ -238,86 +231,107 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Ce que disent nos <span className="text-blue-600">navigateurs</span> satisfaits
+              Ce que disent nos <span className="text-blue-600">navigateurs</span> 5 étoiles
             </h2>
-            <p className="text-xl text-gray-600">
-              Découvrez les expériences exceptionnelles de nos clients
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Découvrez les expériences exceptionnelles de nos clients les plus satisfaits
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {topReviews.map((review) => (
-              <div key={review._id} className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-                {/* En-tête avec note */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                      <span className="text-white font-semibold text-lg">
-                        {review.userId?.nom?.charAt(0) || 'U'}
-                      </span>
+          {reviewsLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Chargement des avis 5 étoiles depuis la table reviews...</p>
+            </div>
+          ) : topReviews.length === 0 ? (
+            <div className="text-center py-12">
+              <Ship className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-medium text-gray-600 mb-2">Aucun avis 5 étoiles disponible</h3>
+              <p className="text-gray-500">Revenez bientôt pour découvrir les avis exceptionnels de nos navigateurs !</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {topReviews.map((review) => (
+                <div key={review._id} className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 relative overflow-hidden">
+                  {/* Badge 5 étoiles */}
+                  <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                    ⭐ 5 ÉTOILES
+                  </div>
+                  
+                  {/* En-tête avec note */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                        <span className="text-white font-semibold text-lg">
+                          {review.userId?.nom?.charAt(0) || 'U'}
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900">
+                          {review.userId?.nom} {review.userId?.prenom}
+                        </h4>
+                        <p className="text-sm text-gray-500">
+                          {review.boatId?.nom || 'Bateau'}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">
-                        {review.userId?.nom} {review.userId?.prenom}
-                      </h4>
-                      <p className="text-sm text-gray-500">
-                        {review.boatId?.nom || 'Bateau'}
+                    <div className="text-right">
+                      <div className="flex items-center space-x-1 mb-2">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            size={20}
+                            className="text-yellow-400 fill-current"
+                          />
+                        ))}
+                      </div>
+                      <p className="text-sm text-gray-500 font-medium">
+                        Excellent
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center space-x-1 mb-2">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          size={20}
-                          className="text-yellow-400 fill-current"
-                        />
-                      ))}
+
+                  {/* Commentaire */}
+                  <div className="mb-6">
+                    <div className="flex items-start space-x-3">
+                      <MessageSquare className="h-6 w-6 text-blue-500 mt-1 flex-shrink-0" />
+                      <blockquote className="text-gray-700 leading-relaxed italic text-lg">
+                        "{review.comment}"
+                      </blockquote>
                     </div>
-                    <p className="text-sm text-gray-500 font-medium">Excellent</p>
                   </div>
-                </div>
 
-                {/* Commentaire */}
-                <div className="mb-6">
-                  <div className="flex items-start space-x-3">
-                    <MessageSquare className="h-6 w-6 text-blue-500 mt-1 flex-shrink-0" />
-                    <blockquote className="text-gray-700 leading-relaxed italic text-lg">
-                      "{review.comment}"
-                    </blockquote>
-                  </div>
-                </div>
-
-                {/* Date et bateau */}
-                <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-100">
-                  <span>
-                    {new Date(review.createdAt).toLocaleDateString('fr-FR', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric'
-                    })}
-                  </span>
-                  {review.boatId?.type && (
-                    <span className="capitalize bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
-                      {review.boatId.type}
+                  {/* Date et bateau */}
+                  <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-100">
+                    <span>
+                      {new Date(review.createdAt).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
                     </span>
-                  )}
+                    {review.boatId?.type && (
+                      <span className="capitalize bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                        {review.boatId.type}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
-          {/* Lien vers tous les avis */}
-          <div className="text-center mt-12">
-            <Link
-              to="/bateaux"
-              className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium text-lg hover:underline"
-            >
-              <span>Voir tous les avis</span>
-              <ArrowRight size={16} />
-            </Link>
-          </div>
+          {topReviews.length > 6 && (
+            <div className="text-center mt-12">
+              <Link
+                to="/avis"
+                className="inline-flex items-center space-x-2 bg-blue-600 text-white px-8 py-3 rounded-full font-medium hover:bg-blue-700 transition-colors"
+              >
+                <span>Voir tous les avis</span>
+                <ArrowRight size={20} />
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 

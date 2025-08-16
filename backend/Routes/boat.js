@@ -103,7 +103,7 @@ router.post('/', requireJsonContent, protect, authorize('proprietaire', 'admin')
 
     if (!['voilier', 'bateau à moteur', 'catamaran'].includes(type.toLowerCase())) {
       return res.status(400).json({ 
-        message: 'Le type doit être voilier, bateau à moteur ou catamaran.' 
+        message: 'Le type doit être l\'un des suivants : voilier, bateau à moteur, catamaran' 
       });
     }
 
@@ -237,6 +237,7 @@ router.put('/:id', requireJsonContent, protect, authorize('proprietaire', 'admin
     if (updateData.localisation && typeof updateData.localisation !== 'string') {
       return res.status(400).json({ message: 'Le champ localisation doit être une chaîne de caractères.' });
     }
+    
     // Trim automatique des champs texte
     const nomTrim = typeof updateData.nom === 'string' ? updateData.nom.trim() : '';
     const typeTrim = typeof updateData.type === 'string' ? updateData.type.trim() : '';
@@ -253,39 +254,44 @@ router.put('/:id', requireJsonContent, protect, authorize('proprietaire', 'admin
         return res.status(400).json({ message: "Le nom du bateau contient des caractères non autorisés (lettres, chiffres, espaces, tirets, apostrophes uniquement)." });
       }
     }
+    
     if (updateData.type) {
       const typeLower = typeTrim.toLowerCase();
-      const typesAutorises = ['voilier', 'bateau à moteur'];
+      const typesAutorises = ['voilier', 'bateau à moteur', 'catamaran'];
       if (!typesAutorises.includes(typeLower)) {
         return res.status(400).json({ message: `Le type doit être l'un des suivants : ${typesAutorises.join(', ')}` });
       }
       updateData.type = typeLower;
-      // On ne valide plus ici la liste, Mongoose gère l'énum
     }
+    
     // longueur : nombre > 0, min 2, max 100
     if (updateData.longueur !== undefined) {
       if (typeof updateData.longueur !== 'number' || updateData.longueur <= 0 || updateData.longueur < 2 || updateData.longueur > 100) {
         return res.status(400).json({ message: "La longueur du bateau doit être un nombre positif entre 2 et 100 mètres." });
       }
     }
+    
     // prix_jour : nombre > 0
     if (updateData.prix_jour !== undefined) {
       if (typeof updateData.prix_jour !== 'number' || updateData.prix_jour <= 0) {
         return res.status(400).json({ message: "Le prix par jour doit être un nombre supérieur à 0." });
       }
     }
+    
     // capacite : entier > 0
     if (updateData.capacite !== undefined) {
       if (!Number.isInteger(updateData.capacite) || updateData.capacite <= 0) {
         return res.status(400).json({ message: "La capacité doit être un entier positif supérieur à 0." });
       }
     }
+    
     // Cohérence capacité/longueur (ex: capacité <= longueur*2)
     const longueurFinale = updateData.longueur !== undefined ? updateData.longueur : bateau.longueur;
     const capaciteFinale = updateData.capacite !== undefined ? updateData.capacite : bateau.capacite;
     if (capaciteFinale > longueurFinale * 2) {
       return res.status(400).json({ message: `La capacité (${capaciteFinale}) est trop élevée pour la longueur du bateau (${longueurFinale}m). Maximum autorisé : ${longueurFinale*2}` });
     }
+    
     // image : chemin absolu (/, C:/, file:///), extension jpg/png/jpeg/gif/webp
     if (updateData.image) {
       if (
@@ -296,6 +302,7 @@ router.put('/:id', requireJsonContent, protect, authorize('proprietaire', 'admin
         return res.status(400).json({ message: "L'image doit être un chemin absolu valide et avoir une extension .jpg, .jpeg, .png, .gif ou .webp." });
       }
     }
+    
     // localisation : format 'longitude,latitude'
     if (updateData.localisation) {
       if (
@@ -305,6 +312,7 @@ router.put('/:id', requireJsonContent, protect, authorize('proprietaire', 'admin
         return res.status(400).json({ message: "La localisation doit être au format 'longitude,latitude' (ex: 43.51246,5.124885)." });
       }
     }
+    
     // Vérifier si un bateau avec ce nom ET cette localisation existe déjà (si modifiés)
     if (updateData.nom && updateData.localisation) {
       const nomFormat = nomTrim.charAt(0).toUpperCase() + nomTrim.slice(1);
@@ -313,6 +321,7 @@ router.put('/:id', requireJsonContent, protect, authorize('proprietaire', 'admin
         return res.status(409).json({ message: "Un bateau avec ce nom et cette localisation existe déjà." });
       }
     }
+    
     // --- FIN VALIDATIONS ---
     const bateauModifie = await Boat.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
     if (!bateauModifie) {
