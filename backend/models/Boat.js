@@ -47,10 +47,11 @@ const boatSchema = new mongoose.Schema({
       message: 'L\'image doit être une URL valide ou un chemin local'
     }
   },
-  localisation: { 
+  destination: { 
     type: String, 
     required: true,
-    trim: true
+    trim: true,
+    enum: ['saint-malo', 'les-glenan', 'crozon', 'la-rochelle', 'marseille', 'cannes', 'ajaccio', 'barcelone', 'palma', 'athenes', 'venise', 'amsterdam', 'split']
   },
   description: {
     type: String,
@@ -77,7 +78,7 @@ const boatSchema = new mongoose.Schema({
 // Index pour améliorer les performances
 boatSchema.index({ proprietaire: 1, createdAt: -1 });
 boatSchema.index({ type: 1 });
-boatSchema.index({ localisation: 1 });
+boatSchema.index({ destination: 1 });
 
 // Méthode pour vérifier la disponibilité
 boatSchema.methods.isAvailable = function() {

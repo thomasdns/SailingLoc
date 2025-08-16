@@ -2,15 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, UserPlus, Search, MapPin, Calendar, Clock, Ship, MessageSquare, Star } from 'lucide-react';
 import SearchFilters from '../components/SearchFilters';
+import SearchResults from '../components/SearchResults';
 import BoatCard from '../components/BoatCard';
 import StarRating from '../components/StarRating';
 
 export default function Home() {
   const [boats, setBoats] = useState([]);
+  const [filteredBoats, setFilteredBoats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [topReviews, setTopReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [searchFilters, setSearchFilters] = useState({
+    destination: '',
+    dateDebut: '',
+    dateFin: '',
+    type: ''
+  });
+  const [isSearching, setIsSearching] = useState(false);
 
   // Récupérer les bateaux et les avis depuis l'API
   useEffect(() => {
@@ -36,8 +45,78 @@ export default function Home() {
     }
   };
 
-  const handleSearch = (filters) => {
-    console.log('Searching with filters:', filters);
+  const handleSearch = async () => {
+    try {
+      setIsSearching(true);
+      
+      // Filtrer les bateaux selon les critères
+      let results = boats.filter(boat => {
+        // Filtre par destination
+        if (searchFilters.destination && boat.destination !== searchFilters.destination) {
+          return false;
+        }
+        
+        // Filtre par type
+        if (searchFilters.type && boat.type !== searchFilters.type) {
+          return false;
+        }
+        
+        // Filtre par dates (si les dates sont sélectionnées)
+        if (searchFilters.dateDebut && searchFilters.dateFin) {
+          // Ici vous pourriez ajouter une logique pour vérifier la disponibilité
+          // Pour l'instant, on affiche tous les bateaux qui correspondent aux autres critères
+        }
+        
+        return true;
+      });
+      
+      setFilteredBoats(results);
+      setIsSearching(false);
+      
+      // Scroll vers la section des résultats ou afficher un message
+      if (results.length > 0) {
+        // Attendre que le composant SearchResults soit rendu et animé
+        setTimeout(() => {
+          const searchResultsSection = document.getElementById('search-results');
+          if (searchResultsSection && searchResultsSection.scrollIntoView) {
+            // Utiliser la méthode personnalisée du composant
+            searchResultsSection.scrollIntoView({ 
+              behavior: 'smooth'
+            });
+          } else {
+            // Fallback si la méthode personnalisée n'est pas disponible
+            searchResultsSection?.scrollIntoView({ 
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
+        }, 300); // Attendre un peu plus pour l'animation
+      } else {
+        // Afficher un message d'information
+        alert('Aucun bateau trouvé pour vos critères de recherche. Essayez de modifier vos filtres.');
+      }
+      
+    } catch (error) {
+      console.error('Erreur lors de la recherche:', error);
+      setIsSearching(false);
+    }
+  };
+
+  const handleFilterChange = (field, value) => {
+    setSearchFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const resetSearch = () => {
+    setSearchFilters({
+      destination: '',
+      dateDebut: '',
+      dateFin: '',
+      type: ''
+    });
+    setFilteredBoats([]);
   };
 
   const fetchTopReviews = async () => {
@@ -119,7 +198,11 @@ export default function Home() {
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                  <select className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700">
+                  <select 
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+                    value={searchFilters.destination}
+                    onChange={(e) => handleFilterChange('destination', e.target.value)}
+                  >
                     <option value="">Destination</option>
                     <option value="saint-malo">Saint-Malo</option>
                     <option value="les-glenan">Les Glénan</option>
@@ -143,6 +226,8 @@ export default function Home() {
                     type="date"
                     placeholder="Date de début"
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+                    value={searchFilters.dateDebut}
+                    onChange={(e) => handleFilterChange('dateDebut', e.target.value)}
                   />
                 </div>
 
@@ -152,12 +237,18 @@ export default function Home() {
                     type="date"
                     placeholder="Date de fin"
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+                    value={searchFilters.dateFin}
+                    onChange={(e) => handleFilterChange('dateFin', e.target.value)}
                   />
                 </div>
 
                 <div className="relative">
                   <Ship className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                  <select className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700">
+                  <select 
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+                    value={searchFilters.type}
+                    onChange={(e) => handleFilterChange('type', e.target.value)}
+                  >
                     <option value="">Type bateau</option>
                     <option value="voilier">Voilier</option>
                     <option value="bateau à moteur">Bateau à moteur</option>
@@ -165,9 +256,22 @@ export default function Home() {
                   </select>
                 </div>
 
-                <button className="bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2">
-                  <Search size={20} />
-                  <span>Rechercher</span>
+                <button 
+                  onClick={handleSearch}
+                  disabled={isSearching}
+                  className="bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSearching ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Recherche...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search size={20} />
+                      <span>Rechercher</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -225,6 +329,15 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* Résultats de recherche */}
+      {filteredBoats.length > 0 && (
+        <SearchResults 
+          boats={filteredBoats}
+          onReset={resetSearch}
+          searchFilters={searchFilters}
+        />
+      )}
 
       {/* Avis 5 étoiles */}
       <section className="py-20 bg-gradient-to-br from-blue-50 to-white">

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, X, Upload, MapPin, Ship, Users, Euro, Ruler } from 'lucide-react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../config/firebase';
 
 export default function AddBoat({ isOpen, onClose, onBoatAdded }) {
   const [formData, setFormData] = useState({
@@ -9,10 +11,13 @@ export default function AddBoat({ isOpen, onClose, onBoatAdded }) {
     prix_jour: '',
     capacite: '',
     image: '',
-    localisation: '',
+    destination: '',
     description: '',
     equipements: []
   });
+
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -54,6 +59,20 @@ export default function AddBoat({ isOpen, onClose, onBoatAdded }) {
     }
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      // Créer un aperçu de l'image
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+        // Ne plus stocker l'image en Base64, on la stockera sur Firebase Storage
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -61,14 +80,28 @@ export default function AddBoat({ isOpen, onClose, onBoatAdded }) {
     setSuccess('');
 
     try {
-      if (!formData.nom || !formData.type || !formData.longueur || !formData.prix_jour || !formData.capacite || !formData.image || !formData.localisation) {
+      if (!formData.nom || !formData.type || !formData.longueur || !formData.prix_jour || !formData.capacite || !formData.destination) {
         throw new Error('Tous les champs obligatoires doivent être remplis');
       }
 
-      if (!/^-?\d{1,3}\.\d+,-?\d{1,3}\.\d+$/.test(formData.localisation)) {
-        throw new Error('La localisation doit être au format "longitude,latitude" (ex: 43.51246,5.124885)');
+      if (!selectedImage) {
+        throw new Error('Veuillez sélectionner une image pour le bateau');
       }
 
+      if (!formData.destination) {
+        throw new Error('Veuillez sélectionner une destination');
+      }
+
+      // 1. Upload de l'image sur Firebase Storage
+      setSuccess('Upload de l\'image en cours...');
+      
+      const imageRef = ref(storage, `boats/${Date.now()}_${selectedImage.name}`);
+      const uploadResult = await uploadBytes(imageRef, selectedImage);
+      const imageURL = await getDownloadURL(uploadResult.ref);
+
+      setSuccess('Image uploadée ! Ajout du bateau...');
+
+      // 2. Ajout du bateau avec l'URL de l'image
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Vous devez être connecté');
@@ -80,17 +113,17 @@ export default function AddBoat({ isOpen, onClose, onBoatAdded }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          nom: formData.nom,
-          type: formData.type,
-          longueur: Number(formData.longueur),
-          prix_jour: Number(formData.prix_jour),
-          capacite: Number(formData.capacite),
-          image: formData.image,
-          localisation: formData.localisation,
-          description: formData.description,
-          equipements: formData.equipements
-        })
+                            body: JSON.stringify({
+                      nom: formData.nom,
+                      type: formData.type,
+                      longueur: Number(formData.longueur),
+                      prix_jour: Number(formData.prix_jour),
+                      capacite: Number(formData.capacite),
+                      image: imageURL, // URL Firebase Storage au lieu de Base64
+                      destination: formData.destination,
+                      description: formData.description,
+                      equipements: formData.equipements
+                    })
       });
 
       const data = await response.json();
@@ -111,6 +144,8 @@ export default function AddBoat({ isOpen, onClose, onBoatAdded }) {
         description: '',
         equipements: []
       });
+      setSelectedImage(null);
+      setImagePreview(null);
 
       if (onBoatAdded) {
         onBoatAdded(data.data);
@@ -140,6 +175,8 @@ export default function AddBoat({ isOpen, onClose, onBoatAdded }) {
       description: '',
       equipements: []
     });
+    setSelectedImage(null);
+    setImagePreview(null);
     setError('');
     setSuccess('');
     onClose();
@@ -265,32 +302,86 @@ export default function AddBoat({ isOpen, onClose, onBoatAdded }) {
                 <Upload className="h-4 w-4" />
                 Image *
               </label>
-              <input
-                type="text"
-                name="image"
-                value={formData.image}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="https://example.com/image.jpg"
-                required
-              />
+              
+              {/* Sélecteur de fichier */}
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                      id="image-upload"
+                    />
+                    <div className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2">
+                      <Upload className="h-4 w-4" />
+                      Choisir une image
+                    </div>
+                  </label>
+                  {selectedImage && (
+                    <span className="text-sm text-green-600 flex items-center gap-1">
+                      <Upload className="h-4 w-4" />
+                      {selectedImage.name}
+                    </span>
+                  )}
+                </div>
+
+                {/* Aperçu de l'image */}
+                {imagePreview && (
+                  <div className="mt-3">
+                    <p className="text-sm text-gray-600 mb-2">Aperçu de l'image :</p>
+                    <div className="relative inline-block">
+                      <img 
+                        src={imagePreview} 
+                        alt="Aperçu" 
+                        className="w-32 h-32 object-cover rounded-lg border shadow-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedImage(null);
+                          setImagePreview(null);
+                          setFormData(prev => ({ ...prev, image: '' }));
+                        }}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors text-xs"
+                        title="Supprimer l'image"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                Localisation *
+                Destination *
               </label>
-              <input
-                type="text"
-                name="localisation"
-                value={formData.localisation}
+              <select
+                name="destination"
+                value={formData.destination}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="43.51246,5.124885"
                 required
-              />
-              <p className="text-xs text-gray-500 mt-1">Format: longitude,latitude</p>
+              >
+                <option value="">Choisir une destination</option>
+                <option value="saint-malo">Saint-Malo</option>
+                <option value="les-glenan">Les Glénan</option>
+                <option value="crozon">Crozon</option>
+                <option value="la-rochelle">La Rochelle</option>
+                <option value="marseille">Marseille</option>
+                <option value="cannes">Cannes</option>
+                <option value="ajaccio">Ajaccio</option>
+                <option value="barcelone">Barcelone</option>
+                <option value="palma">Palma de Majorque</option>
+                <option value="athenes">Athènes</option>
+                <option value="venise">Venise</option>
+                <option value="amsterdam">Amsterdam</option>
+                <option value="split">Split</option>
+              </select>
             </div>
           </div>
 

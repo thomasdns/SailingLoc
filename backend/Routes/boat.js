@@ -71,20 +71,20 @@ router.get('/:id', async (req, res) => {
 // POST /api/boats - Ajouter un nouveau bateau (propriétaire ou admin uniquement)
 router.post('/', requireJsonContent, protect, authorize('proprietaire', 'admin'), async (req, res) => {
   try {
-    const { nom, type, longueur, prix_jour, capacite, image, localisation, description, equipements } = req.body;
+    const { nom, type, longueur, prix_jour, capacite, image, destination, description, equipements } = req.body;
     const proprietaire = req.user.id; // ID de l'utilisateur connecté
 
     // Validation des champs requis
-    if (!nom || !type || !longueur || !prix_jour || !capacite || !image || !localisation) {
+    if (!nom || !type || !longueur || !prix_jour || !capacite || !image || !destination) {
       return res.status(400).json({ 
-        message: 'Les champs nom, type, longueur, prix_jour, capacite, image et localisation sont obligatoires.' 
+        message: 'Les champs nom, type, longueur, prix_jour, capacite, image et destination sont obligatoires.' 
       });
     }
 
     // Validation des types
-    if (typeof nom !== 'string' || typeof type !== 'string' || typeof image !== 'string' || typeof localisation !== 'string') {
+    if (typeof nom !== 'string' || typeof type !== 'string' || typeof image !== 'string' || typeof destination !== 'string') {
       return res.status(400).json({ 
-        message: 'Les champs nom, type, image et localisation doivent être des chaînes de caractères.' 
+        message: 'Les champs nom, type, image et destination doivent être des chaînes de caractères.' 
       });
     }
 
@@ -125,15 +125,16 @@ router.post('/', requireJsonContent, protect, authorize('proprietaire', 'admin')
       });
     }
 
-    // Validation de l'image (URL Firebase ou chemin local)
+    // Validation de l'image (URL Firebase Storage ou chemin local)
     if (!image.trim()) {
       return res.status(400).json({ 
         message: 'L\'image est obligatoire.' 
       });
     }
 
-    // Validation du format de l'image
+    // Validation du format de l'image - accepter URLs Firebase Storage et chemins locaux
     const isValidImageUrl = image.trim().startsWith('https://firebasestorage.googleapis.com') ||
+                           image.trim().startsWith('https://storage.googleapis.com') ||
                            image.trim().startsWith('http://') ||
                            image.trim().startsWith('https://') ||
                            image.trim().startsWith('/') ||
@@ -141,14 +142,15 @@ router.post('/', requireJsonContent, protect, authorize('proprietaire', 'admin')
 
     if (!isValidImageUrl) {
       return res.status(400).json({ 
-        message: 'L\'image doit être une URL valide ou un chemin local.' 
+        message: 'L\'image doit être une URL Firebase Storage valide ou un chemin local.' 
       });
     }
 
-    // Validation de la localisation (format: "longitude,latitude")
-    if (!/^-?\d{1,3}\.\d+,-?\d{1,3}\.\d+$/.test(localisation.trim())) {
+    // Validation de la destination
+    const destinationsValides = ['saint-malo', 'les-glenan', 'crozon', 'la-rochelle', 'marseille', 'cannes', 'ajaccio', 'barcelone', 'palma', 'athenes', 'venise', 'amsterdam', 'split'];
+    if (!destinationsValides.includes(destination.trim().toLowerCase())) {
       return res.status(400).json({ 
-        message: 'La localisation doit être au format "longitude,latitude" (ex: 43.51246,5.124885).' 
+        message: 'La destination doit être l\'une des suivantes : ' + destinationsValides.join(', ') + '.' 
       });
     }
 
@@ -168,7 +170,7 @@ router.post('/', requireJsonContent, protect, authorize('proprietaire', 'admin')
       prix_jour,
       capacite,
       image: image.trim(),
-      localisation: localisation.trim(),
+      destination: destination.trim().toLowerCase(),
       description: description ? description.trim() : '',
       equipements: equipements && Array.isArray(equipements) ? equipements : [],
       proprietaire
@@ -234,15 +236,15 @@ router.put('/:id', requireJsonContent, protect, authorize('proprietaire', 'admin
     if (updateData.image && typeof updateData.image !== 'string') {
       return res.status(400).json({ message: 'Le champ image doit être une chaîne de caractères.' });
     }
-    if (updateData.localisation && typeof updateData.localisation !== 'string') {
-      return res.status(400).json({ message: 'Le champ localisation doit être une chaîne de caractères.' });
+    if (updateData.destination && typeof updateData.destination !== 'string') {
+      return res.status(400).json({ message: 'Le champ destination doit être une chaîne de caractères.' });
     }
     
     // Trim automatique des champs texte
     const nomTrim = typeof updateData.nom === 'string' ? updateData.nom.trim() : '';
     const typeTrim = typeof updateData.type === 'string' ? updateData.type.trim() : '';
     const imageTrim = typeof updateData.image === 'string' ? updateData.image.trim() : '';
-    const localisationTrim = typeof updateData.localisation === 'string' ? updateData.localisation.trim() : '';
+    const destinationTrim = typeof updateData.destination === 'string' ? updateData.destination.trim() : '';
 
     // nom : longueur min/max, pas de caractères spéciaux, première lettre en majuscule
     if (updateData.nom) {
@@ -292,33 +294,42 @@ router.put('/:id', requireJsonContent, protect, authorize('proprietaire', 'admin
       return res.status(400).json({ message: `La capacité (${capaciteFinale}) est trop élevée pour la longueur du bateau (${longueurFinale}m). Maximum autorisé : ${longueurFinale*2}` });
     }
     
-    // image : chemin absolu (/, C:/, file:///), extension jpg/png/jpeg/gif/webp
+    // image : URL Firebase Storage ou chemin absolu local
     if (updateData.image) {
       if (
         typeof imageTrim !== 'string' ||
-        !(imageTrim.startsWith('/') || imageTrim.startsWith('C:/') || imageTrim.startsWith('file:///')) ||
-        !/\.(jpg|jpeg|png|gif|webp)$/i.test(imageTrim)
+        !(
+          imageTrim.startsWith('https://firebasestorage.googleapis.com') ||
+          imageTrim.startsWith('https://storage.googleapis.com') ||
+          imageTrim.startsWith('http://') ||
+          imageTrim.startsWith('https://') ||
+          imageTrim.startsWith('/') ||
+          imageTrim.startsWith('C:/') ||
+          imageTrim.startsWith('file:///')
+        )
       ) {
-        return res.status(400).json({ message: "L'image doit être un chemin absolu valide et avoir une extension .jpg, .jpeg, .png, .gif ou .webp." });
+        return res.status(400).json({ message: "L'image doit être une URL Firebase Storage valide ou un chemin local valide." });
       }
     }
     
-    // localisation : format 'longitude,latitude'
-    if (updateData.localisation) {
+    // destination : validation des destinations autorisées
+    if (updateData.destination) {
+      const destinationsValides = ['saint-malo', 'les-glenan', 'crozon', 'la-rochelle', 'marseille', 'cannes', 'ajaccio', 'barcelone', 'palma', 'athenes', 'venise', 'amsterdam', 'split'];
       if (
-        typeof localisationTrim !== 'string' ||
-        !/^-?\d{1,3}\.\d+,-?\d{1,3}\.\d+$/.test(localisationTrim)
+        typeof destinationTrim !== 'string' ||
+        !destinationsValides.includes(destinationTrim.toLowerCase())
       ) {
-        return res.status(400).json({ message: "La localisation doit être au format 'longitude,latitude' (ex: 43.51246,5.124885)." });
+        return res.status(400).json({ message: "La destination doit être l'une des suivantes : " + destinationsValides.join(', ') + "." });
       }
+      updateData.destination = destinationTrim.toLowerCase();
     }
     
-    // Vérifier si un bateau avec ce nom ET cette localisation existe déjà (si modifiés)
-    if (updateData.nom && updateData.localisation) {
+    // Vérifier si un bateau avec ce nom ET cette destination existe déjà (si modifiés)
+    if (updateData.nom && updateData.destination) {
       const nomFormat = nomTrim.charAt(0).toUpperCase() + nomTrim.slice(1);
-      const existingBoat = await Boat.findOne({ nom: nomFormat, localisation: localisationTrim });
+      const existingBoat = await Boat.findOne({ nom: nomFormat, destination: destinationTrim.toLowerCase() });
       if (existingBoat && existingBoat._id.toString() !== id) {
-        return res.status(409).json({ message: "Un bateau avec ce nom et cette localisation existe déjà." });
+        return res.status(409).json({ message: "Un bateau avec ce nom et cette destination existe déjà." });
       }
     }
     
