@@ -2,11 +2,12 @@ import { Router } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { protect, authorize } from "../middleware/auth.js";
+import { validateCaptcha } from "../middleware/captcha.js";
 
 const router = Router();
 
 // Register
-router.post("/register", async (req, res) => {
+router.post("/register", validateCaptcha, async (req, res) => {
   try {
     // Extract data from request body
     const { email, password, nom, prenom, tel, role } = req.body;
@@ -84,7 +85,7 @@ router.post("/register", async (req, res) => {
 });
 
 // Login
-router.post("/login", async (req, res) => {
+router.post("/login", validateCaptcha, async (req, res) => {
   try {
     const { email, password } = req.body;
 

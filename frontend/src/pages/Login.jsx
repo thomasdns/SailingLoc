@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Anchor } from 'lucide-react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Captcha from '../components/Captcha';
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -12,6 +13,8 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [captchaData, setCaptchaData] = useState({});
+  const [isCaptchaCorrect, setIsCaptchaCorrect] = useState(false);
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -44,6 +47,10 @@ export default function Login() {
       newErrors.password = 'Le mot de passe doit contenir au moins 6 caractères';
     }
     
+    if (!isCaptchaCorrect) {
+      newErrors.captcha = 'Veuillez résoudre le CAPTCHA correctement';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -65,7 +72,10 @@ export default function Login() {
         },
         body: JSON.stringify({
           email: formData.email,
-          password: formData.password
+          password: formData.password,
+          captchaQuestion: captchaData.question,
+          captchaAnswer: captchaData.answer,
+          userAnswer: captchaData.userAnswer
         })
       });
       if (!response.ok) {
@@ -216,6 +226,16 @@ export default function Login() {
                   Mot de passe oublié ?
                 </Link>
               </div>
+              
+              {/* CAPTCHA */}
+              <Captcha
+                onCaptchaChange={setCaptchaData}
+                isCorrect={isCaptchaCorrect}
+                setIsCorrect={setIsCaptchaCorrect}
+              />
+              {errors.captcha && (
+                <p className="mt-2 text-sm text-red-600">{errors.captcha}</p>
+              )}
               
               <button
                 type="submit"
