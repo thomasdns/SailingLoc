@@ -18,6 +18,7 @@ import CGU_CGV from './pages/CGU_CGV';
 import MentionsLegales from './pages/MentionsLegales';
 import Reservation from './pages/Reservation';
 import MesReservations from './pages/MesReservations';
+import NotFound from './pages/NotFound';
 import ScrollToTop from './components/ScrollToTop';
 
 function App() {
@@ -44,6 +45,8 @@ function App() {
             <Route path="/profil" element={<Profil />} />
             <Route path="/cgu-cgv" element={<CGU_CGV />} />
             <Route path="/mentions-legales" element={<MentionsLegales />} />
+            {/* Route 404 - doit être placée en dernier */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
         <Footer />
