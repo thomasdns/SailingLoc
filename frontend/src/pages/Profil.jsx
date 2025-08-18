@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/header';
 import Footer from '../components/Footer';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { Trash2, AlertTriangle } from 'lucide-react';
 
 export default function Profil() {
+  const navigate = useNavigate();
   // Préremplir depuis le localStorage si dispo (sinon vide)
   const [formData, setFormData] = useState({
     nom: localStorage.getItem('userNom') || '',
@@ -16,6 +19,8 @@ export default function Profil() {
   });
   const [message, setMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -68,6 +73,88 @@ export default function Profil() {
       setMessage('');
     } catch (err) {
       setMessage(err.message);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Vous devez être connecté');
+      }
+
+      const response = await fetch('http://localhost:3001/api/user/delete-account', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erreur lors de la suppression du compte');
+      }
+
+      // Supprimer toutes les données du localStorage
+      localStorage.clear();
+      
+      toast.success(
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <span style={{ fontSize: 22, marginRight: 10 }}>✅</span>
+          <div>
+            <strong style={{ color: '#16a34a' }}>Compte supprimé avec succès</strong>
+            <br />
+            <span style={{ fontSize: 14 }}>Vous allez être redirigé vers l'accueil</span>
+          </div>
+        </div>,
+        {
+          position: 'top-center',
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: 'light',
+          style: { background: '#e6f9ec', color: '#16a34a', fontWeight: 500, fontSize: 18, border: '2px solid #16a34a' },
+          icon: false
+        }
+      );
+
+      // Rediriger vers l'accueil après 3 secondes
+      setTimeout(() => {
+        navigate('/');
+      }, 3000);
+
+    } catch (error) {
+      toast.error(
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <span style={{ fontSize: 22, marginRight: 10 }}>❌</span>
+          <div>
+            <strong style={{ color: '#dc2626' }}>Erreur</strong>
+            <br />
+            <span style={{ fontSize: 14 }}>{error.message}</span>
+          </div>
+        </div>,
+        {
+          position: 'top-center',
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: 'light',
+          style: { background: '#fef2f2', color: '#dc2626', fontWeight: 500, fontSize: 18, border: '2px solid #dc2626' },
+          icon: false
+        }
+      );
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -153,8 +240,73 @@ export default function Profil() {
             </button>
             {message && <div className="text-green-600 text-center mt-2">{message}</div>}
           </form>
+
+          {/* Séparateur */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Zone dangereuse</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                La suppression de votre compte est irréversible. Toutes vos données, 
+                réservations et bateaux seront définitivement supprimés.
+              </p>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              >
+                <Trash2 className="h-5 w-5" />
+                Supprimer mon compte
+              </button>
+            </div>
+          </div>
         </div>
       </main>
+
+      {/* Modal de confirmation de suppression */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Supprimer votre compte ?
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Cette action est irréversible. Toutes vos données seront définitivement supprimées.
+              </p>
+              
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteAccount}
+                  disabled={deleteLoading}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {deleteLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Suppression...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      Supprimer définitivement
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
