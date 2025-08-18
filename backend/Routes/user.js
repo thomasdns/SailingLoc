@@ -9,19 +9,27 @@ const router = Router();
 
 router.put('/update', async (req, res) => {
   try {
-    const { id, nom, prenom, email, telephone, password } = req.body;
+    const { id, nom, prenom, email, telephone, password, siret, siren } = req.body;
     const updateFields = { nom, prenom, email, tel: telephone };
+    
+    // Ajouter SIRET et SIREN si fournis
+    if (siret !== undefined) updateFields.siret = siret;
+    if (siren !== undefined) updateFields.siren = siren;
+    
     if (password && password.trim() !== '') {
       // Hash du mot de passe si modifié
       const bcrypt = await import('bcryptjs');
       updateFields.password = await bcrypt.default.hash(password, 10);
     }
+    
     const user = await User.findByIdAndUpdate(
       id,
       updateFields,
       { new: true }
     );
+    
     if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
+    
     res.json({
       user: {
         id: user._id,
@@ -29,7 +37,9 @@ router.put('/update', async (req, res) => {
         prenom: user.prenom,
         email: user.email,
         tel: user.tel,
-        role: user.role
+        role: user.role,
+        siret: user.siret,
+        siren: user.siren
       }
     });
   } catch (error) {

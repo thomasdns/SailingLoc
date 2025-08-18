@@ -10,7 +10,7 @@ const router = Router();
 router.post("/register", validateCaptcha, async (req, res) => {
   try {
     // Extract data from request body
-    const { email, password, nom, prenom, tel, role } = req.body;
+    const { email, password, nom, prenom, tel, role, siret, siren } = req.body;
     
     // Validation du mot de passe fort
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
@@ -38,6 +38,29 @@ router.post("/register", validateCaptcha, async (req, res) => {
       return res.status(400).json({ message: 'Rôle invalide. Rôles autorisés: admin, client, proprietaire' });
     }
 
+    // Validation SIRET et SIREN pour les propriétaires
+    if (userRole === 'proprietaire') {
+      if (!siret || !siren) {
+        return res.status(400).json({ 
+          message: 'SIRET et SIREN sont obligatoires pour les propriétaires' 
+        });
+      }
+      
+      // Validation format SIRET (14 chiffres)
+      if (!/^\d{14}$/.test(siret)) {
+        return res.status(400).json({ 
+          message: 'Le SIRET doit contenir exactement 14 chiffres' 
+        });
+      }
+      
+      // Validation format SIREN (9 chiffres)
+      if (!/^\d{9}$/.test(siren)) {
+        return res.status(400).json({ 
+          message: 'Le SIREN doit contenir exactement 9 chiffres' 
+        });
+      }
+    }
+
     // Check if user already exists with this email
     let user = await User.findOne({ email });
     if (user) {
@@ -53,6 +76,7 @@ router.post("/register", validateCaptcha, async (req, res) => {
       prenom,
       tel,
       role: userRole,
+      ...(userRole === 'proprietaire' && { siret, siren })
     });
     await user.save();
     // Create token
@@ -76,6 +100,8 @@ router.post("/register", validateCaptcha, async (req, res) => {
         prenom: user.prenom,
         tel: user.tel,
         role: user.role,
+        ...(user.siret && { siret: user.siret }),
+        ...(user.siren && { siren: user.siren })
       },
     });
   } catch (error) {

@@ -14,7 +14,9 @@ export default function Register() {
     password: '',
     confirmPassword: '',
     acceptTerms: false,
-    userType: 'client' // valeur par défaut corrigée
+    userType: 'client', // valeur par défaut corrigée
+    siret: '',
+    siren: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -73,6 +75,21 @@ export default function Register() {
     if (!formData.acceptTerms) {
       newErrors.acceptTerms = 'Vous devez accepter les conditions d\'utilisation';
     }
+
+    // Validation SIRET et SIREN pour les propriétaires
+    if (formData.userType === 'proprietaire') {
+      if (!formData.siret.trim()) {
+        newErrors.siret = 'Le SIRET est requis pour les propriétaires';
+      } else if (!/^\d{14}$/.test(formData.siret)) {
+        newErrors.siret = 'Le SIRET doit contenir exactement 14 chiffres';
+      }
+      
+      if (!formData.siren.trim()) {
+        newErrors.siren = 'Le SIREN est requis pour les propriétaires';
+      } else if (!/^\d{9}$/.test(formData.siren)) {
+        newErrors.siren = 'Le SIREN doit contenir exactement 9 chiffres';
+      }
+    }
     
     if (!isCaptchaCorrect) {
       newErrors.captcha = 'Veuillez résoudre le CAPTCHA correctement';
@@ -105,6 +122,10 @@ export default function Register() {
           password: formData.password,
           tel: formData.telephone.replace(/\D/g, ''),
           role: formData.userType,
+          ...(formData.userType === 'proprietaire' && {
+            siret: formData.siret,
+            siren: formData.siren
+          }),
           captchaQuestion: captchaData.question,
           captchaAnswer: captchaData.answer,
           userAnswer: captchaData.userAnswer
@@ -243,6 +264,61 @@ export default function Register() {
 
               </div>
             </div>
+
+            {/* Champs SIRET et SIREN pour les propriétaires */}
+            {formData.userType === 'proprietaire' && (
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
+                <h3 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">
+                  <Anchor className="h-5 w-5" />
+                  Informations professionnelles
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="siret" className="block text-sm font-bold text-gray-900 mb-2">
+                      SIRET *
+                    </label>
+                    <input
+                      type="text"
+                      id="siret"
+                      name="siret"
+                      value={formData.siret}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        errors.siret ? 'border-red-500' : 'border-gray-200'
+                      }`}
+                      placeholder="12345678901234"
+                      maxLength="14"
+                    />
+                    {errors.siret && (
+                      <p className="mt-2 text-sm text-red-600">{errors.siret}</p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500">14 chiffres sans espaces</p>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="siren" className="block text-sm font-bold text-gray-900 mb-2">
+                      SIREN *
+                    </label>
+                    <input
+                      type="text"
+                      id="siren"
+                      name="siren"
+                      value={formData.siren}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        errors.siren ? 'border-red-500' : 'border-gray-200'
+                      }`}
+                      placeholder="123456789"
+                      maxLength="9"
+                    />
+                    {errors.siren && (
+                      <p className="mt-2 text-sm text-red-600">{errors.siren}</p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500">9 chiffres sans espaces</p>
+                  </div>
+                </div>
+              </div>
+            )}
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">

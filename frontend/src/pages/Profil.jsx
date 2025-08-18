@@ -15,7 +15,9 @@ export default function Profil() {
     prenom: localStorage.getItem('userPrenom') || '',
     email: localStorage.getItem('userEmail') || '',
     telephone: localStorage.getItem('userTel') || '',
-    password: ''
+    password: '',
+    siret: localStorage.getItem('userSiret') || '',
+    siren: localStorage.getItem('userSiren') || ''
   });
   const [message, setMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -40,7 +42,9 @@ export default function Profil() {
           prenom: formData.prenom,
           email: formData.email,
           telephone: formData.telephone,
-          password: formData.password
+          password: formData.password,
+          siret: formData.siret,
+          siren: formData.siren
         })
       });
       const data = await response.json();
@@ -50,6 +54,8 @@ export default function Profil() {
       localStorage.setItem('userPrenom', data.user.prenom);
       localStorage.setItem('userEmail', data.user.email);
       localStorage.setItem('userTel', data.user.tel);
+      if (data.user.siret) localStorage.setItem('userSiret', data.user.siret);
+      if (data.user.siren) localStorage.setItem('userSiren', data.user.siren);
       toast.success(
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <span style={{ fontSize: 22, marginRight: 10 }}>✅</span>
@@ -210,6 +216,39 @@ export default function Profil() {
                 placeholder="Votre téléphone"
               />
             </div>
+
+            {/* Champs SIRET et SIREN pour les propriétaires */}
+            {localStorage.getItem('userRole') === 'proprietaire' && (
+              <>
+                <div>
+                  <label className="block text-sm font-bold text-gray-900 mb-2">SIRET</label>
+                  <input
+                    type="text"
+                    name="siret"
+                    value={formData.siret}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-200"
+                    placeholder="12345678901234"
+                    maxLength="14"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">14 chiffres sans espaces</p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-bold text-gray-900 mb-2">SIREN</label>
+                  <input
+                    type="text"
+                    name="siren"
+                    value={formData.siren}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-200"
+                    placeholder="123456789"
+                    maxLength="9"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">9 chiffres sans espaces</p>
+                </div>
+              </>
+            )}
             <div>
               <label className="block text-sm font-bold text-gray-900 mb-2">Mot de passe</label>
               <div className="relative">

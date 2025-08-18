@@ -11,6 +11,32 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['admin', 'client', 'proprietaire'],
     default: 'client'
+  },
+  siret: { 
+    type: String, 
+    required: function() { return this.role === 'proprietaire'; },
+    validate: {
+      validator: function(v) {
+        if (this.role === 'proprietaire') {
+          return /^\d{14}$/.test(v);
+        }
+        return true;
+      },
+      message: 'Le SIRET doit contenir exactement 14 chiffres'
+    }
+  },
+  siren: { 
+    type: String, 
+    required: function() { return this.role === 'proprietaire'; },
+    validate: {
+      validator: function(v) {
+        if (this.role === 'proprietaire') {
+          return /^\d{9}$/.test(v);
+        }
+        return true;
+      },
+      message: 'Le SIREN doit contenir exactement 9 chiffres'
+    }
   }
 }, { timestamps: true });
 
