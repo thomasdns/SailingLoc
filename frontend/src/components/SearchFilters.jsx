@@ -71,7 +71,7 @@ export default function SearchFilters({ onSearch }) {
             <option value="voilier">Voilier</option>
             <option value="yacht">Yacht</option>
             <option value="catamaran">Catamaran</option>
-            <option value="moteur">Bateau à moteur</option>
+            <option value="yacht">Yacht</option>
           </select>
         </div>
 
