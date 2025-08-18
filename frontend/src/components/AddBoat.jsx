@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, X, Upload, MapPin, Ship, Users, Euro, Ruler } from 'lucide-react';
+import { Plus, X, Upload, MapPin, Ship, Users, Euro, Ruler, Settings } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../config/firebase';
 
@@ -18,6 +18,7 @@ export default function AddBoat({ isOpen, onClose, onBoatAdded }) {
 
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [customEquipment, setCustomEquipment] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -56,6 +57,30 @@ export default function AddBoat({ isOpen, onClose, onBoatAdded }) {
         ...prev,
         [name]: value
       }));
+    }
+  };
+
+  const handleAddCustomEquipment = () => {
+    if (customEquipment.trim() && !formData.equipements.includes(customEquipment.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        equipements: [...prev.equipements, customEquipment.trim()]
+      }));
+      setCustomEquipment('');
+    }
+  };
+
+  const handleRemoveEquipment = (equipmentToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      equipements: prev.equipements.filter(eq => eq !== equipmentToRemove)
+    }));
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddCustomEquipment();
     }
   };
 
@@ -398,21 +423,78 @@ export default function AddBoat({ isOpen, onClose, onBoatAdded }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Équipements disponibles</label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {equipmentOptions.map((equipment) => (
-                <label key={equipment} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    value={equipment}
-                    checked={formData.equipements.includes(equipment)}
-                    onChange={handleInputChange}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">{equipment}</span>
-                </label>
-              ))}
+            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Équipements disponibles
+            </label>
+            
+            {/* Équipements prédéfinis */}
+            <div className="mb-6">
+              <h4 className="text-sm font-medium text-gray-600 mb-3">Équipements standards :</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {equipmentOptions.map((equipment) => (
+                  <label key={equipment} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      value={equipment}
+                      checked={formData.equipements.includes(equipment)}
+                      onChange={handleInputChange}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">{equipment}</span>
+                  </label>
+                ))}
+              </div>
             </div>
+
+            {/* Ajout d'équipements personnalisés */}
+            <div className="mb-6">
+              <h4 className="text-sm font-medium text-gray-600 mb-3">Ajouter un équipement personnalisé :</h4>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customEquipment}
+                  onChange={(e) => setCustomEquipment(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Ex: Jacuzzi, Bar, Cabine VIP..."
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCustomEquipment}
+                  disabled={!customEquipment.trim()}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Ajouter
+                </button>
+              </div>
+            </div>
+
+            {/* Liste des équipements sélectionnés */}
+            {formData.equipements.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-600 mb-3">Équipements sélectionnés :</h4>
+                <div className="flex flex-wrap gap-2">
+                  {formData.equipements.map((equipment, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-2 rounded-full text-sm font-medium"
+                    >
+                      <span>{equipment}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveEquipment(equipment)}
+                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                        title="Supprimer cet équipement"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
