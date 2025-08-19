@@ -197,9 +197,14 @@ export default function Home() {
             <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 max-w-5xl mx-auto shadow-2xl">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="h-4 w-4 text-gray-500" />
+                    <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                      Destination
+                    </label>
+                  </div>
                   <select 
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 mt-2"
                     value={searchFilters.destination}
                     onChange={(e) => handleFilterChange('destination', e.target.value)}
                   >
@@ -221,58 +226,75 @@ export default function Home() {
                 </div>
 
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                      Date de début
+                    </label>
+                  </div>
                   <input
                     type="date"
                     placeholder="Date de début"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 mt-2"
                     value={searchFilters.dateDebut}
                     onChange={(e) => handleFilterChange('dateDebut', e.target.value)}
                   />
                 </div>
 
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                      Date de fin
+                    </label>
+                  </div>
                   <input
                     type="date"
                     placeholder="Date de fin"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 mt-2"
                     value={searchFilters.dateFin}
                     onChange={(e) => handleFilterChange('dateFin', e.target.value)}
                   />
                 </div>
 
                 <div className="relative">
-                  <Ship className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <div className="flex items-center space-x-2">
+                    <Ship className="h-4 w-4 text-gray-500" />
+                    <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                      Type de bateau
+                    </label>
+                  </div>
                   <select 
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 mt-2 min-w-[140px]"
                     value={searchFilters.type}
                     onChange={(e) => handleFilterChange('type', e.target.value)}
                   >
-                    <option value="">Type bateau</option>
+                    <option value="">Type</option>
                     <option value="voilier">Voilier</option>
                     <option value="yacht">Yacht</option>
                     <option value="catamaran">Catamaran</option>
                   </select>
                 </div>
 
-                <button 
-                  onClick={handleSearch}
-                  disabled={isSearching}
-                  className="bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSearching ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Recherche...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Search size={20} />
-                      <span>Rechercher</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex items-end">
+                  <button 
+                    onClick={handleSearch}
+                    disabled={isSearching}
+                    className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSearching ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Recherche...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Search size={20} />
+                        <span>Rechercher</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
