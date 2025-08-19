@@ -21,6 +21,9 @@ import MesReservations from "./pages/MesReservations";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import CookieConsent from "./components/CookieConsent";
+import Payment from "./pages/Payment";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancel from "./pages/PaymentCancel";
 
 function App() {
   return (
@@ -35,6 +38,9 @@ function App() {
             <Route path="/bateaux/:id" element={<BoatDetail />} />
             <Route path="/reservation/:boatId" element={<Reservation />} />
             <Route path="/mes-reservations" element={<MesReservations />} />
+            <Route path="/payment" element={<Payment />} />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/payment/cancel" element={<PaymentCancel />} />
             <Route path="/a-propos" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/connexion" element={<Login />} />

@@ -8,6 +8,7 @@ import bookingRoutes from "./Routes/bookings.js";
 import reviewRoutes from "./Routes/reviews.js";
 import contactRoutes from './Routes/contact.js';
 import userRoutes from './Routes/user.js';
+import paymentRoutes from './Routes/payment.js';
 
 dotenv.config();
  
@@ -25,6 +26,7 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/payment', paymentRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running");
