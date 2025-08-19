@@ -4,6 +4,7 @@ import { ArrowLeft, MapPin, Users, Calendar, Star, Check, Ship, Ruler, Euro, Loa
 import StarRating from '../components/StarRating';
 import AddReview from '../components/AddReview';
 import ReviewCard from '../components/ReviewCard';
+import HeartButton from '../components/HeartButton';
 
 export default function BoatDetail() {
   const { id } = useParams();
@@ -130,7 +131,7 @@ export default function BoatDetail() {
             </div>
             <div className="flex items-center space-x-1 text-sm text-gray-600">
               <MapPin size={16} />
-              <span className="capitalize">{boat.type}</span>
+              <span className="capitalize">{boat.destination}</span>
             </div>
           </div>
         </div>
@@ -150,6 +151,7 @@ export default function BoatDetail() {
               <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded-md font-medium">
                 {boat.type}
               </div>
+              <HeartButton boatId={boat._id} />
             </div>
 
             {/* Details */}
