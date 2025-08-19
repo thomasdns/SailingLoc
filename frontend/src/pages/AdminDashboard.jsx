@@ -21,7 +21,10 @@ export default function AdminDashboard() {
     prenom: '',
     email: '',
     tel: '',
-    role: 'client'
+    role: 'client',
+    isProfessionnel: false,
+    siret: '',
+    siren: ''
   });
   const [addFormData, setAddFormData] = useState({
     nom: '',
@@ -29,7 +32,10 @@ export default function AdminDashboard() {
     email: '',
     tel: '',
     password: '',
-    role: 'client'
+    role: 'client',
+    isProfessionnel: false,
+    siret: '',
+    siren: ''
   });
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -202,7 +208,10 @@ export default function AdminDashboard() {
         email: user.email,
         role: user.role,
         status: user.status || 'actif',
-        tel: user.tel || ''
+        tel: user.tel || '',
+        siret: user.siret || '',
+        siren: user.siren || '',
+        isProfessionnel: user.isProfessionnel || false
       })));
 
       // Utiliser les vraies données des bateaux avec leurs avis
@@ -302,7 +311,10 @@ export default function AdminDashboard() {
       prenom: user.prenom,
       email: user.email,
       tel: user.tel || '',
-      role: user.role
+      role: user.role,
+      isProfessionnel: user.isProfessionnel || false,
+      siret: user.siret || '',
+      siren: user.siren || ''
     });
     setShowEditModal(true);
   };
@@ -314,13 +326,28 @@ export default function AdminDashboard() {
       email: '',
       tel: '',
       password: '',
-      role: 'client'
+      role: 'client',
+      isProfessionnel: false,
+      siret: '',
+      siren: ''
     });
     setShowAddModal(true);
   };
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
+    
+    // Validation conditionnelle pour SIRET/SIREN
+    if (addFormData.role === 'proprietaire' && addFormData.isProfessionnel) {
+      if (!addFormData.siret || addFormData.siret.length !== 14) {
+        toast.error('Le SIRET doit contenir exactement 14 chiffres pour les professionnels');
+        return;
+      }
+      if (!addFormData.siren || addFormData.siren.length !== 9) {
+        toast.error('Le SIREN doit contenir exactement 9 chiffres pour les professionnels');
+        return;
+      }
+    }
     
     try {
       const token = localStorage.getItem('token');
@@ -336,7 +363,21 @@ export default function AdminDashboard() {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(addFormData)
+        body: JSON.stringify({
+          nom: addFormData.nom,
+          prenom: addFormData.prenom,
+          email: addFormData.email,
+          password: addFormData.password,
+          tel: addFormData.tel,
+          role: addFormData.role,
+          ...(addFormData.role === 'proprietaire' && {
+            isProfessionnel: addFormData.isProfessionnel,
+            ...(addFormData.isProfessionnel && {
+              siret: addFormData.siret,
+              siren: addFormData.siren
+            })
+          })
+        })
       });
 
       if (!response.ok) {
@@ -354,7 +395,10 @@ export default function AdminDashboard() {
         email: data.user.email,
         tel: data.user.tel,
         role: data.user.role,
-        status: 'active'
+        status: 'active',
+        siret: data.user.siret || '',
+        siren: data.user.siren || '',
+        isProfessionnel: data.user.isProfessionnel || false
       };
       
       setUsers([newUser, ...users]);
@@ -371,6 +415,18 @@ export default function AdminDashboard() {
 
   const handleUpdateUser = async (e) => {
     e.preventDefault();
+    
+    // Validation conditionnelle pour SIRET/SIREN
+    if (editFormData.role === 'proprietaire' && editFormData.isProfessionnel) {
+      if (!editFormData.siret || editFormData.siret.length !== 14) {
+        toast.error('Le SIRET doit contenir exactement 14 chiffres pour les professionnels');
+        return;
+      }
+      if (!editFormData.siren || editFormData.siren.length !== 9) {
+        toast.error('Le SIREN doit contenir exactement 9 chiffres pour les professionnels');
+        return;
+      }
+    }
     
     try {
       const token = localStorage.getItem('token');
@@ -662,6 +718,9 @@ export default function AdminDashboard() {
                           Rôle
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Statut Pro
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Statut
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -688,6 +747,19 @@ export default function AdminDashboard() {
                             }`}>
                               {user.role}
                             </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {user.role === 'proprietaire' ? (
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                user.isProfessionnel ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                              }`}>
+                                {user.isProfessionnel ? 'Professionnel' : 'Particulier'}
+                              </span>
+                            ) : (
+                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                                N/A
+                              </span>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -1036,6 +1108,80 @@ export default function AdminDashboard() {
                   </select>
                 </div>
                 
+                {/* Champs SIRET et SIREN uniquement pour les propriétaires */}
+                {editFormData.role === 'proprietaire' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Statut
+                      </label>
+                      <div className="space-y-2">
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="isProfessionnel"
+                            value="false"
+                            checked={editFormData.isProfessionnel === false}
+                            onChange={(e) => setEditFormData({...editFormData, isProfessionnel: e.target.value === 'true'})}
+                            className="mr-2 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">Particulier</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="isProfessionnel"
+                            value="true"
+                            checked={editFormData.isProfessionnel === true}
+                            onChange={(e) => setEditFormData({...editFormData, isProfessionnel: e.target.value === 'true'})}
+                            className="mr-2 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">Professionnel</span>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    {editFormData.isProfessionnel && (
+                      <>
+                        <div className="border-t border-gray-200 pt-4 mt-4">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-3">Informations professionnelles</h4>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                SIRET *
+                              </label>
+                              <input
+                                type="text"
+                                value={editFormData.siret || ''}
+                                onChange={(e) => setEditFormData({...editFormData, siret: e.target.value})}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="12345678901234"
+                                pattern="[0-9]{14}"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">14 chiffres sans espaces</p>
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                SIREN *
+                              </label>
+                              <input
+                                type="text"
+                                value={editFormData.siren || ''}
+                                onChange={(e) => setEditFormData({...editFormData, siren: e.target.value})}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="123456789"
+                                pattern="[0-9]{9}"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">9 chiffres sans espaces</p>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+                
                 <div className="flex space-x-3 pt-4">
                   <button
                     type="button"
@@ -1126,6 +1272,34 @@ export default function AdminDashboard() {
                        {viewingUser.status || 'Actif'}
                      </span>
                    </div>
+                   
+                   {/* Afficher SIRET et SIREN uniquement pour les propriétaires */}
+                   {viewingUser.role === 'proprietaire' && (
+                     <>
+                       <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                         <span className="text-sm font-medium text-gray-600">Statut</span>
+                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                           viewingUser.isProfessionnel ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                         }`}>
+                           {viewingUser.isProfessionnel ? 'Professionnel' : 'Particulier'}
+                         </span>
+                       </div>
+                       
+                       {viewingUser.isProfessionnel && (
+                         <>
+                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                             <span className="text-sm font-medium text-gray-600">SIRET</span>
+                             <span className="text-sm text-gray-900">{viewingUser.siret || 'Non renseigné'}</span>
+                           </div>
+                           
+                           <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                             <span className="text-sm font-medium text-gray-600">SIREN</span>
+                             <span className="text-sm text-gray-900">{viewingUser.siren || 'Non renseigné'}</span>
+                           </div>
+                         </>
+                       )}
+                     </>
+                   )}
                  </div>
 
                  <div className="flex space-x-3 pt-6">
@@ -1256,6 +1430,82 @@ export default function AdminDashboard() {
                      <option value="admin">Admin</option>
                    </select>
                  </div>
+                 
+                 {/* Champs SIRET et SIREN uniquement pour les propriétaires */}
+                 {addFormData.role === 'proprietaire' && (
+                   <>
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-2">
+                         Statut
+                       </label>
+                       <div className="space-y-2">
+                         <label className="flex items-center">
+                           <input
+                             type="radio"
+                             name="isProfessionnel"
+                             value="false"
+                             checked={addFormData.isProfessionnel === false}
+                             onChange={(e) => setAddFormData({...addFormData, isProfessionnel: e.target.value === 'true'})}
+                             className="mr-2 text-blue-600 focus:ring-blue-500"
+                           />
+                           <span className="text-sm text-gray-700">Particulier</span>
+                         </label>
+                         <label className="flex items-center">
+                           <input
+                             type="radio"
+                             name="isProfessionnel"
+                             value="true"
+                             checked={addFormData.isProfessionnel === true}
+                             onChange={(e) => setAddFormData({...addFormData, isProfessionnel: e.target.value === 'true'})}
+                             className="mr-2 text-blue-600 focus:ring-blue-500"
+                           />
+                           <span className="text-sm text-gray-700">Professionnel</span>
+                         </label>
+                       </div>
+                     </div>
+                     
+                     {addFormData.isProfessionnel && (
+                       <>
+                         <div className="border-t border-gray-200 pt-4 mt-4">
+                           <h4 className="text-sm font-semibold text-gray-700 mb-3">Informations professionnelles</h4>
+                           <div className="space-y-4">
+                             <div>
+                               <label className="block text-sm font-medium text-gray-700 mb-2">
+                                 SIRET *
+                               </label>
+                               <input
+                                 type="text"
+                                 value={addFormData.siret || ''}
+                                 onChange={(e) => setAddFormData({...addFormData, siret: e.target.value})}
+                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                 placeholder="12345678901234"
+                                 pattern="[0-9]{14}"
+                                 required
+                               />
+                               <p className="text-xs text-gray-500 mt-1">14 chiffres sans espaces</p>
+                             </div>
+                             
+                             <div>
+                               <label className="block text-sm font-medium text-gray-700 mb-2">
+                                 SIREN *
+                               </label>
+                               <input
+                                 type="text"
+                                 value={addFormData.siren || ''}
+                                 onChange={(e) => setAddFormData({...addFormData, siren: e.target.value})}
+                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                 placeholder="123456789"
+                                 pattern="[0-9]{9}"
+                                 required
+                               />
+                               <p className="text-xs text-gray-500 mt-1">9 chiffres sans espaces</p>
+                             </div>
+                           </div>
+                         </div>
+                       </>
+                     )}
+                   </>
+                 )}
                  
                  <div className="flex space-x-3 pt-4">
                    <button

@@ -12,30 +12,34 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'client', 'proprietaire'],
     default: 'client'
   },
+  isProfessionnel: {
+    type: Boolean,
+    default: false
+  },
   siret: { 
     type: String, 
-    required: function() { return this.role === 'proprietaire'; },
+    required: function() { return this.role === 'proprietaire' && this.isProfessionnel; },
     validate: {
       validator: function(v) {
-        if (this.role === 'proprietaire') {
+        if (this.role === 'proprietaire' && this.isProfessionnel) {
           return /^\d{14}$/.test(v);
         }
         return true;
       },
-      message: 'Le SIRET doit contenir exactement 14 chiffres'
+      message: 'Le SIRET doit contenir exactement 14 chiffres pour les professionnels'
     }
   },
   siren: { 
     type: String, 
-    required: function() { return this.role === 'proprietaire'; },
+    required: function() { return this.role === 'proprietaire' && this.isProfessionnel; },
     validate: {
       validator: function(v) {
-        if (this.role === 'proprietaire') {
+        if (this.role === 'proprietaire' && this.isProfessionnel) {
           return /^\d{9}$/.test(v);
         }
         return true;
       },
-      message: 'Le SIREN doit contenir exactement 9 chiffres'
+      message: 'Le SIREN doit contenir exactement 9 chiffres pour les professionnels'
     }
   }
 }, { timestamps: true });

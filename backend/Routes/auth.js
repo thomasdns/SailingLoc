@@ -10,7 +10,7 @@ const router = Router();
 router.post("/register", validateCaptcha, async (req, res) => {
   try {
     // Extract data from request body
-    const { email, password, nom, prenom, tel, role, siret, siren } = req.body;
+    const { email, password, nom, prenom, tel, role, isProfessionnel, siret, siren } = req.body;
     
     // Validation du mot de passe fort
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
@@ -38,11 +38,11 @@ router.post("/register", validateCaptcha, async (req, res) => {
       return res.status(400).json({ message: 'Rôle invalide. Rôles autorisés: admin, client, proprietaire' });
     }
 
-    // Validation SIRET et SIREN pour les propriétaires
-    if (userRole === 'proprietaire') {
+    // Validation SIRET et SIREN pour les propriétaires professionnels
+    if (userRole === 'proprietaire' && isProfessionnel) {
       if (!siret || !siren) {
         return res.status(400).json({ 
-          message: 'SIRET et SIREN sont obligatoires pour les propriétaires' 
+          message: 'SIRET et SIREN sont obligatoires pour les propriétaires professionnels' 
         });
       }
       
@@ -76,7 +76,8 @@ router.post("/register", validateCaptcha, async (req, res) => {
       prenom,
       tel,
       role: userRole,
-      ...(userRole === 'proprietaire' && { siret, siren })
+      isProfessionnel: isProfessionnel || false,
+      ...(userRole === 'proprietaire' && isProfessionnel && { siret, siren })
     });
     await user.save();
     // Create token
@@ -100,6 +101,7 @@ router.post("/register", validateCaptcha, async (req, res) => {
         prenom: user.prenom,
         tel: user.tel,
         role: user.role,
+        isProfessionnel: user.isProfessionnel, // Ajout de isProfessionnel
         ...(user.siret && { siret: user.siret }),
         ...(user.siren && { siren: user.siren })
       },
@@ -168,7 +170,7 @@ router.get("/dashboard", protect, authorize('admin'), async (req, res) => {
 
     // Récupérer les derniers utilisateurs
     const recentUsers = await User.find()
-      .select('nom prenom email role createdAt')
+      .select('nom prenom email role isProfessionnel siret siren createdAt')
       .sort({ createdAt: -1 })
       .limit(10);
 
@@ -217,7 +219,7 @@ router.delete("/users/:userId", protect, authorize('admin'), async (req, res) =>
 router.put("/users/:userId", protect, authorize('admin'), async (req, res) => {
   try {
     const { userId } = req.params;
-    const { nom, prenom, email, tel, role } = req.body;
+    const { nom, prenom, email, tel, role, isProfessionnel, siret, siren } = req.body;
 
     // Vérifier que l'utilisateur existe
     const user = await User.findById(userId);
@@ -237,6 +239,29 @@ router.put("/users/:userId", protect, authorize('admin'), async (req, res) => {
       });
     }
 
+    // Validation SIRET et SIREN pour les propriétaires professionnels
+    if (role === 'proprietaire' && isProfessionnel) {
+      if (!siret || !siren) {
+        return res.status(400).json({ 
+          message: 'SIRET et SIREN sont obligatoires pour les propriétaires professionnels' 
+        });
+      }
+      
+      // Validation format SIRET (14 chiffres)
+      if (!/^\d{14}$/.test(siret)) {
+        return res.status(400).json({ 
+          message: 'Le SIRET doit contenir exactement 14 chiffres' 
+        });
+      }
+      
+      // Validation format SIREN (9 chiffres)
+      if (!/^\d{9}$/.test(siren)) {
+        return res.status(400).json({ 
+          message: 'Le SIREN doit contenir exactement 9 chiffres' 
+        });
+      }
+    }
+
     // Vérifier si l'email existe déjà (sauf pour l'utilisateur actuel)
     const existingUser = await User.findOne({ email, _id: { $ne: userId } });
     if (existingUser) {
@@ -251,7 +276,9 @@ router.put("/users/:userId", protect, authorize('admin'), async (req, res) => {
         prenom,
         email: email.toLowerCase(),
         tel,
-        role: role || user.role
+        role: role || user.role,
+        isProfessionnel: isProfessionnel || user.isProfessionnel,
+        ...(isProfessionnel && siret && siren && { siret, siren })
       },
       { new: true, runValidators: true }
     );
@@ -264,7 +291,10 @@ router.put("/users/:userId", protect, authorize('admin'), async (req, res) => {
         prenom: updatedUser.prenom,
         email: updatedUser.email,
         tel: updatedUser.tel,
-        role: updatedUser.role
+        role: updatedUser.role,
+        isProfessionnel: updatedUser.isProfessionnel,
+        ...(updatedUser.siret && { siret: updatedUser.siret }),
+        ...(updatedUser.siren && { siren: updatedUser.siren })
       }
     });
   } catch (error) {

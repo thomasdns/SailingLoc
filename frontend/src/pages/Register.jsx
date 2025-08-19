@@ -15,6 +15,7 @@ export default function Register() {
     confirmPassword: '',
     acceptTerms: false,
     userType: 'client', // valeur par défaut corrigée
+    isProfessionnel: false,
     siret: '',
     siren: ''
   });
@@ -77,15 +78,15 @@ export default function Register() {
     }
 
     // Validation SIRET et SIREN pour les propriétaires
-    if (formData.userType === 'proprietaire') {
+    if (formData.userType === 'proprietaire' && formData.isProfessionnel) {
       if (!formData.siret.trim()) {
-        newErrors.siret = 'Le SIRET est requis pour les propriétaires';
+        newErrors.siret = 'Le SIRET est requis pour les professionnels';
       } else if (!/^\d{14}$/.test(formData.siret)) {
         newErrors.siret = 'Le SIRET doit contenir exactement 14 chiffres';
       }
       
       if (!formData.siren.trim()) {
-        newErrors.siren = 'Le SIREN est requis pour les propriétaires';
+        newErrors.siren = 'Le SIREN est requis pour les professionnels';
       } else if (!/^\d{9}$/.test(formData.siren)) {
         newErrors.siren = 'Le SIREN doit contenir exactement 9 chiffres';
       }
@@ -123,8 +124,11 @@ export default function Register() {
           tel: formData.telephone.replace(/\D/g, ''),
           role: formData.userType,
           ...(formData.userType === 'proprietaire' && {
-            siret: formData.siret,
-            siren: formData.siren
+            isProfessionnel: formData.isProfessionnel,
+            ...(formData.isProfessionnel && {
+              siret: formData.siret,
+              siren: formData.siren
+            })
           }),
           captchaQuestion: captchaData.question,
           captchaAnswer: captchaData.answer,
@@ -270,53 +274,88 @@ export default function Register() {
               <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
                 <h3 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">
                   <Anchor className="h-5 w-5" />
-                  Informations professionnelles
+                  Statut du propriétaire
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="siret" className="block text-sm font-bold text-gray-900 mb-2">
-                      SIRET *
-                    </label>
+                
+                {/* Boutons radio pour le statut */}
+                <div className="space-y-3 mb-4">
+                  <label className="flex items-center">
                     <input
-                      type="text"
-                      id="siret"
-                      name="siret"
-                      value={formData.siret}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        errors.siret ? 'border-red-500' : 'border-gray-200'
-                      }`}
-                      placeholder="12345678901234"
-                      maxLength="14"
+                      type="radio"
+                      name="isProfessionnel"
+                      value="false"
+                      checked={formData.isProfessionnel === false}
+                      onChange={(e) => setFormData({...formData, isProfessionnel: e.target.value === 'true'})}
+                      className="mr-3 text-blue-600 focus:ring-blue-500"
                     />
-                    {errors.siret && (
-                      <p className="mt-2 text-sm text-red-600">{errors.siret}</p>
-                    )}
-                    <p className="mt-1 text-xs text-gray-500">14 chiffres sans espaces</p>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="siren" className="block text-sm font-bold text-gray-900 mb-2">
-                      SIREN *
-                    </label>
+                    <span className="text-sm font-medium text-gray-700">Particulier</span>
+                  </label>
+                  <label className="flex items-center">
                     <input
-                      type="text"
-                      id="siren"
-                      name="siren"
-                      value={formData.siren}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        errors.siren ? 'border-red-500' : 'border-gray-200'
-                      }`}
-                      placeholder="123456789"
-                      maxLength="9"
+                      type="radio"
+                      name="isProfessionnel"
+                      value="true"
+                      checked={formData.isProfessionnel === true}
+                      onChange={(e) => setFormData({...formData, isProfessionnel: e.target.value === 'true'})}
+                      className="mr-3 text-blue-600 focus:ring-blue-500"
                     />
-                    {errors.siren && (
-                      <p className="mt-2 text-sm text-red-600">{errors.siren}</p>
-                    )}
-                    <p className="mt-1 text-xs text-gray-500">9 chiffres sans espaces</p>
-                  </div>
+                    <span className="text-sm font-medium text-gray-700">Professionnel</span>
+                  </label>
                 </div>
+                
+                {/* Champs SIRET/SIREN uniquement pour les professionnels */}
+                {formData.isProfessionnel && (
+                  <>
+                    <div className="border-t border-blue-300 pt-4 mt-4">
+                      <h4 className="text-sm font-semibold text-blue-900 mb-3">Informations professionnelles</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="siret" className="block text-sm font-bold text-gray-900 mb-2">
+                            SIRET *
+                          </label>
+                          <input
+                            type="text"
+                            id="siret"
+                            name="siret"
+                            value={formData.siret}
+                            onChange={handleInputChange}
+                            className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              errors.siret ? 'border-red-500' : 'border-gray-200'
+                            }`}
+                            placeholder="12345678901234"
+                            maxLength="14"
+                          />
+                          {errors.siret && (
+                            <p className="mt-2 text-sm text-red-600">{errors.siret}</p>
+                          )}
+                          <p className="mt-1 text-xs text-gray-500">14 chiffres sans espaces</p>
+                        </div>
+                        
+                        <div>
+                          <label htmlFor="siren" className="block text-sm font-bold text-gray-900 mb-2">
+                            SIREN *
+                          </label>
+                          <input
+                            type="text"
+                            id="siren"
+                            name="siren"
+                            value={formData.siren}
+                            onChange={handleInputChange}
+                            className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              errors.siren ? 'border-red-500' : 'border-gray-200'
+                            }`}
+                            placeholder="123456789"
+                            maxLength="9"
+                          />
+                          {errors.siren && (
+                            <p className="mt-2 text-sm text-red-600">{errors.siren}</p>
+                          )}
+                          <p className="mt-1 text-xs text-gray-500">9 chiffres sans espaces</p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
             
