@@ -13,6 +13,9 @@ export default function AdminDashboard() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [viewingUser, setViewingUser] = useState(null);
+  const [viewingBoat, setViewingBoat] = useState(null);
+  const [showBoatReviewsModal, setShowBoatReviewsModal] = useState(false);
+  const [reviews, setReviews] = useState([]);
   const [editFormData, setEditFormData] = useState({
     nom: '',
     prenom: '',
@@ -32,7 +35,7 @@ export default function AdminDashboard() {
     totalUsers: 0,
     totalBoats: 0,
     totalBookings: 0,
-    totalRevenue: 0
+    totalReviews: 0
   });
 
   useEffect(() => {
@@ -110,22 +113,70 @@ export default function AdminDashboard() {
         console.log('API des réservations non disponible:', error.message);
       }
 
+      // Récupérer les avis pour chaque bateau
+      let totalReviews = 0;
+      let boatsWithReviews = [];
+      
+      for (const boat of boatsData) {
+        try {
+          const reviewsResponse = await fetch(`http://localhost:3001/api/reviews/boat/${boat._id}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (reviewsResponse.ok) {
+            const reviewsResult = await reviewsResponse.json();
+            const reviews = reviewsResult.data || [];
+            totalReviews += reviews.length;
+            
+            boatsWithReviews.push({
+              ...boat,
+              reviews: reviews,
+              reviewCount: reviews.length
+            });
+          } else {
+            boatsWithReviews.push({
+              ...boat,
+              reviews: [],
+              reviewCount: 0
+            });
+          }
+        } catch (error) {
+          console.log(`Erreur lors de la récupération des avis pour ${boat.nom}:`, error.message);
+          boatsWithReviews.push({
+            ...boat,
+            reviews: [],
+            reviewCount: 0
+          });
+        }
+      }
+
+      // Récupérer tous les avis pour l'onglet Avis
+      let allReviews = [];
+      try {
+        const allReviewsResponse = await fetch('http://localhost:3001/api/reviews', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (allReviewsResponse.ok) {
+          const allReviewsResult = await allReviewsResponse.json();
+          allReviews = allReviewsResult.data || [];
+          console.log(`Récupération de ${allReviews.length} avis depuis la base de données`);
+        } else {
+          console.log('Erreur API avis:', allReviewsResponse.status, allReviewsResponse.statusText);
+        }
+      } catch (error) {
+        console.log('API des avis non disponible:', error.message);
+      }
+
       // Calculer les vraies statistiques
       const totalBoats = boatsData.length;
       const totalBookings = bookingsData.length;
-      const totalRevenue = bookingsData.reduce((sum, booking) => {
-        // Calculer le revenu basé sur le prix et la durée des réservations
-        if (booking.prix_jour && booking.dateDebut && booking.dateFin) {
-          const startDate = new Date(booking.dateDebut);
-          const endDate = new Date(booking.dateFin);
-          const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-          return sum + (booking.prix_jour * days);
-        } else if (booking.prix_total) {
-          // Si on a directement le prix total
-          return sum + booking.prix_total;
-        }
-        return sum;
-      }, 0);
 
       // Afficher des messages informatifs si les données ne sont pas disponibles
       if (boatsData.length === 0) {
@@ -141,7 +192,7 @@ export default function AdminDashboard() {
         totalUsers: data.stats.totalUsers,
         totalBoats: totalBoats,
         totalBookings: totalBookings,
-        totalRevenue: totalRevenue
+        totalReviews: totalReviews
       });
 
       setUsers(data.recentUsers.map(user => ({
@@ -154,8 +205,8 @@ export default function AdminDashboard() {
         tel: user.tel || ''
       })));
 
-      // Utiliser les vraies données des bateaux
-      setBoats(boatsData.map(boat => ({
+      // Utiliser les vraies données des bateaux avec leurs avis
+      setBoats(boatsWithReviews.map(boat => ({
         id: boat._id,
         nom: boat.nom,
         type: boat.type,
@@ -165,7 +216,19 @@ export default function AdminDashboard() {
         localisation: boat.localisation,
         status: boat.disponible ? 'disponible' : 'indisponible',
         image: boat.image,
-        createdAt: boat.createdAt
+        createdAt: boat.createdAt,
+        reviews: boat.reviews,
+        reviewCount: boat.reviewCount
+      })));
+
+      // Mettre à jour l'état des avis
+      setReviews(allReviews.map(review => ({
+        id: review._id,
+        userId: review.userId,
+        boatId: review.boatId,
+        rating: review.rating,
+        comment: review.comment,
+        createdAt: review.createdAt
       })));
     } catch (error) {
       toast.error('Erreur lors du chargement des données');
@@ -225,6 +288,11 @@ export default function AdminDashboard() {
   const handleViewUser = (user) => {
     setViewingUser(user);
     setShowViewModal(true);
+  };
+
+  const handleViewBoat = (boat) => {
+    setViewingBoat(boat);
+    setShowBoatReviewsModal(true);
   };
 
   const handleEditUser = (user) => {
@@ -354,6 +422,41 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteReview = async (reviewId) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet avis ?')) {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          toast.error('Token d\'authentification manquant');
+          return;
+        }
+
+        const response = await fetch(`http://localhost:3001/api/reviews/${reviewId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Erreur lors de la suppression');
+        }
+
+        // Supprimer l'avis de la liste locale
+        setReviews(reviews.filter(review => review.id !== reviewId));
+        toast.success('Avis supprimé avec succès');
+        
+        // Recharger les données du dashboard pour mettre à jour les statistiques
+        fetchDashboardData();
+      } catch (error) {
+        toast.error(error.message || 'Erreur lors de la suppression de l\'avis');
+        console.error(error);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
@@ -443,8 +546,8 @@ export default function AdminDashboard() {
                 <BarChart3 className="h-8 w-8 text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Revenus</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalRevenue}€</p>
+                <p className="text-sm font-medium text-gray-600">Avis</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.totalReviews}</p>
               </div>
             </div>
           </div>
@@ -483,6 +586,16 @@ export default function AdminDashboard() {
                 }`}
               >
                 Bateaux
+              </button>
+              <button
+                onClick={() => setActiveTab('reviews')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'reviews'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Avis
               </button>
               
             </nav>
@@ -646,7 +759,7 @@ export default function AdminDashboard() {
                           Capacité
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Prix/jour
+                          Avis
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Statut
@@ -672,7 +785,11 @@ export default function AdminDashboard() {
                             <div className="text-sm text-gray-900">{boat.capacite} pers.</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{boat.prix}€</div>
+                            <div className="text-sm text-gray-900">
+                              <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                {boat.reviewCount || 0} avis
+                              </span>
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -687,7 +804,11 @@ export default function AdminDashboard() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex space-x-2">
-                              <button className="text-blue-600 hover:text-blue-900">
+                              <button 
+                                onClick={() => handleViewBoat(boat)}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="Voir les avis"
+                              >
                                 <Eye className="h-4 w-4" />
                               </button>
                               <button className="text-indigo-600 hover:text-indigo-900">
@@ -709,6 +830,120 @@ export default function AdminDashboard() {
               </div>
             )}
 
+            {/* Reviews Tab */}
+            {activeTab === 'reviews' && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Gestion des avis</h3>
+                  <div className="text-sm text-gray-500">
+                    Total : {reviews.length} avis
+                  </div>
+                </div>
+                
+                {reviews.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 mb-4">
+                      <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </div>
+                    <h4 className="text-lg font-medium text-gray-900 mb-2">Aucun avis disponible</h4>
+                    <p className="text-gray-500">Aucun utilisateur n'a encore laissé d'avis sur les bateaux.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Utilisateur
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Bateau
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Note
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Commentaire
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Date
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {reviews.map(review => (
+                          <tr key={review.id}>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">
+                                {review.userId?.prenom} {review.userId?.nom}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {review.userId?.email}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">
+                                {boats.find(boat => boat.id === review.boatId?._id || boat.id === review.boatId)?.nom || 'Bateau supprimé'}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {boats.find(boat => boat.id === review.boatId?._id || boat.id === review.boatId)?.type || ''}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center space-x-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <span
+                                    key={i}
+                                    className={`text-lg ${
+                                      i < review.rating ? 'text-yellow-400' : 'text-gray-300'
+                                    }`}
+                                  >
+                                    ★
+                                  </span>
+                                ))}
+                                <span className="ml-2 text-sm text-gray-600">
+                                  ({review.rating}/5)
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="max-w-xs">
+                                <p className="text-sm text-gray-900 truncate" title={review.comment}>
+                                  "{review.comment}"
+                                </p>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {new Date(review.createdAt).toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                              })}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex space-x-2">
+                                <button 
+                                  onClick={() => handleDeleteReview(review.id)}
+                                  className="text-red-600 hover:text-red-900"
+                                  title="Supprimer l'avis"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
             
           </div>
                  </div>
@@ -1040,6 +1275,97 @@ export default function AdminDashboard() {
                    </button>
                  </div>
                </form>
+             </div>
+           </div>
+         )}
+
+         {/* Modal d'affichage des avis d'un bateau */}
+         {showBoatReviewsModal && viewingBoat && (
+           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+             <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden">
+               <div className="flex justify-between items-center p-6 border-b">
+                 <h3 className="text-lg font-semibold text-gray-900">
+                   Avis du bateau : {viewingBoat.nom}
+                 </h3>
+                 <button
+                   onClick={() => {
+                     setShowBoatReviewsModal(false);
+                     setViewingBoat(null);
+                   }}
+                   className="text-gray-400 hover:text-gray-600"
+                 >
+                   <X className="h-6 w-6" />
+                 </button>
+               </div>
+               
+               <div className="p-6 overflow-y-auto max-h-[60vh]">
+                 {viewingBoat.reviews && viewingBoat.reviews.length > 0 ? (
+                   <div className="space-y-4">
+                     {viewingBoat.reviews.map((review, index) => (
+                       <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                         <div className="flex items-center justify-between mb-3">
+                           <div className="flex items-center space-x-3">
+                             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                               <span className="text-sm font-semibold text-blue-600">
+                                 {review.userId?.nom?.charAt(0) || review.userId?.prenom?.charAt(0) || 'U'}
+                               </span>
+                             </div>
+                             <div>
+                               <h4 className="font-medium text-gray-900">
+                                 {review.userId?.prenom} {review.userId?.nom}
+                               </h4>
+                               <p className="text-sm text-gray-500">
+                                 {new Date(review.createdAt).toLocaleDateString('fr-FR', {
+                                   day: 'numeric',
+                                   month: 'long',
+                                   year: 'numeric'
+                                 })}
+                               </p>
+                             </div>
+                           </div>
+                           <div className="flex items-center space-x-1">
+                             {[...Array(5)].map((_, i) => (
+                               <span
+                                 key={i}
+                                 className={`text-lg ${
+                                   i < review.rating ? 'text-yellow-400' : 'text-gray-300'
+                                 }`}
+                               >
+                                 ★
+                               </span>
+                             ))}
+                           </div>
+                         </div>
+                         <div className="bg-white rounded-lg p-3 border border-gray-100">
+                           <p className="text-gray-700 italic">"{review.comment}"</p>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 ) : (
+                   <div className="text-center py-12">
+                     <div className="text-gray-400 mb-4">
+                       <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                       </svg>
+                     </div>
+                     <h4 className="text-lg font-medium text-gray-900 mb-2">Aucun avis disponible</h4>
+                     <p className="text-gray-500">Ce bateau n'a pas encore reçu d'avis.</p>
+                   </div>
+                 )}
+               </div>
+
+               <div className="flex justify-end p-6 border-t border-gray-200">
+                 <button
+                   onClick={() => {
+                     setShowBoatReviewsModal(false);
+                     setViewingBoat(null);
+                   }}
+                   className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                 >
+                   Fermer
+                 </button>
+               </div>
              </div>
            </div>
          )}
