@@ -124,7 +124,9 @@ export default function Footer() {
             <h3 className="text-xl font-bold mb-6">PLAN DU SITE</h3>
             <div className="space-y-3">
               <div className="space-y-2">
-                <h4 className="font-semibold text-blue-200 text-sm uppercase tracking-wide">Pages principales</h4>
+                <h4 className="font-semibold text-blue-200 text-sm uppercase tracking-wide">
+                  Pages principales
+                </h4>
                 <Link
                   to="/"
                   className="block hover:text-blue-300 transition-colors text-sm"
@@ -150,9 +152,11 @@ export default function Footer() {
                   • Contact et support
                 </Link>
               </div>
-              
+
               <div className="space-y-2 pt-3">
-                <h4 className="font-semibold text-blue-200 text-sm uppercase tracking-wide">Espace utilisateur</h4>
+                <h4 className="font-semibold text-blue-200 text-sm uppercase tracking-wide">
+                  Espace utilisateur
+                </h4>
                 <Link
                   to="/connexion"
                   className="block hover:text-blue-300 transition-colors text-sm"
@@ -186,7 +190,9 @@ export default function Footer() {
               </div>
 
               <div className="space-y-2 pt-3">
-                <h4 className="font-semibold text-blue-200 text-sm uppercase tracking-wide">Gestion des bateaux</h4>
+                <h4 className="font-semibold text-blue-200 text-sm uppercase tracking-wide">
+                  Gestion des bateaux
+                </h4>
                 <Link
                   to="/gestion-bateaux"
                   className="block hover:text-blue-300 transition-colors text-sm"
@@ -202,7 +208,9 @@ export default function Footer() {
               </div>
 
               <div className="space-y-2 pt-3">
-                <h4 className="font-semibold text-blue-200 text-sm uppercase tracking-wide">Administration</h4>
+                <h4 className="font-semibold text-blue-200 text-sm uppercase tracking-wide">
+                  Administration
+                </h4>
                 <Link
                   to="/admin"
                   className="block hover:text-blue-300 transition-colors text-sm"
@@ -212,7 +220,9 @@ export default function Footer() {
               </div>
 
               <div className="space-y-2 pt-3">
-                <h4 className="font-semibold text-blue-200 text-sm uppercase tracking-wide">Légal</h4>
+                <h4 className="font-semibold text-blue-200 text-sm uppercase tracking-wide">
+                  Légal
+                </h4>
                 <Link
                   to="/mentions-legales"
                   className="block hover:text-blue-300 transition-colors text-sm"
@@ -241,14 +251,20 @@ export default function Footer() {
             <div className="space-y-4">
               <div className="flex space-x-4">
                 <a
-                  href="#"
+                  href="https://www.facebook.com/profile.php?id=61579074677515"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="SailingLoc sur Facebook"
                   className="w-10 h-10 bg-blue-800 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors"
                   title="Facebook"
                 >
                   <Facebook className="h-5 w-5" />
                 </a>
                 <a
-                  href="#"
+                  href="https://www.instagram.com/salingloc/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="SailingLoc sur Instagram"
                   className="w-10 h-10 bg-blue-800 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors"
                   title="Instagram"
                 >
@@ -262,7 +278,10 @@ export default function Footer() {
                   <Youtube className="h-5 w-5" />
                 </a>
                 <a
-                  href="#"
+                  href="https://www.linkedin.com/in/sailingloc-equipe-0a1a5937a/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="SailingLoc sur LinkedIn"
                   className="w-10 h-10 bg-blue-800 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors"
                   title="LinkedIn"
                 >
@@ -271,7 +290,9 @@ export default function Footer() {
               </div>
 
               <div className="pt-4">
-                <h4 className="font-semibold text-blue-200 text-sm uppercase tracking-wide mb-3">Newsletter</h4>
+                <h4 className="font-semibold text-blue-200 text-sm uppercase tracking-wide mb-3">
+                  Newsletter
+                </h4>
                 <form onSubmit={handleNewsletterSubmit} className="space-y-3">
                   <input
                     type="email"
@@ -283,7 +304,7 @@ export default function Footer() {
                   />
                   <button
                     type="submit"
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
                   >
                     S'abonner
                   </button>
@@ -296,11 +317,18 @@ export default function Footer() {
         {/* Copyright */}
         <div className="border-t border-blue-800 mt-12 pt-8 text-center">
           <p className="text-blue-300 text-sm">
-            © 2024 SailingLoc. Tous droits réservés. | 
-            <Link to="/mentions-legales" className="hover:text-white transition-colors ml-2">
+            © 2024 SailingLoc. Tous droits réservés. |
+            <Link
+              to="/mentions-legales"
+              className="hover:text-white transition-colors ml-2"
+            >
               Mentions légales
-            </Link> | 
-            <Link to="/politique-confidentialite" className="hover:text-white transition-colors ml-2">
+            </Link>{" "}
+            |
+            <Link
+              to="/politique-confidentialite"
+              className="hover:text-white transition-colors ml-2"
+            >
               Politique de confidentialité
             </Link>
           </p>
