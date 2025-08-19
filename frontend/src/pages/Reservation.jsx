@@ -102,7 +102,8 @@ export default function Reservation() {
         return;
       }
 
-      const response = await fetch('http://localhost:3001/api/bookings', {
+      // Démarrer un paiement Stripe Checkout et rediriger
+      const response = await fetch('http://localhost:3001/api/payment/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -113,25 +114,17 @@ export default function Reservation() {
           startDate: reservationData.startDate,
           endDate: reservationData.endDate,
           numberOfGuests: reservationData.numberOfGuests,
-          specialRequests: reservationData.specialRequests,
-          totalPrice: reservationData.totalPrice
+          specialRequests: reservationData.specialRequests
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Erreur lors de la réservation');
+        throw new Error(errorData.message || 'Erreur lors de l’initiation du paiement');
       }
 
-      const result = await response.json();
-      console.log('Réservation créée:', result);
-      setSuccess(true);
-      
-             // Rediriger vers "Mes Réservations" après 3 secondes
-       setTimeout(() => {
-         navigate('/mes-reservations');
-       }, 3000);
-
+      const { url } = await response.json();
+      window.location.href = url;
     } catch (error) {
       setError(error.message);
     } finally {
@@ -172,12 +165,12 @@ export default function Reservation() {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             Réservation confirmée !
           </h2>
-                     <p className="text-gray-600 mb-6">
-             Votre réservation a été créée avec succès ! Elle apparaîtra dans votre espace "Mes Réservations".
-           </p>
-           <p className="text-sm text-gray-500">
-             Redirection vers "Mes Réservations" dans quelques secondes...
-           </p>
+          <p className="text-gray-600 mb-6">
+            Votre réservation a été créée avec succès ! Elle apparaîtra dans votre espace "Mes Réservations".
+          </p>
+          <p className="text-sm text-gray-500">
+            Redirection vers "Mes Réservations" dans quelques secondes...
+          </p>
         </div>
       </div>
     );
@@ -282,7 +275,7 @@ export default function Reservation() {
                   {submitting ? (
                     <div className="flex items-center justify-center space-x-2">
                       <Loader2 className="h-5 w-5 animate-spin" />
-                      <span>Création de la réservation...</span>
+                      <span>Redirection vers le paiement...</span>
                     </div>
                   ) : (
                     'Confirmer la réservation'
