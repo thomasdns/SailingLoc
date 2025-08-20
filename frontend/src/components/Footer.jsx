@@ -113,7 +113,7 @@ export default function Footer() {
 
           {/* PLAN DU SITE - Colonne 2 */}
           <div>
-            <h3 className="text-xl font-bold mb-6">PLAN DU SITE</h3>
+            <h3 className="text-xl font-bold mb-6"> </h3>
             <div className="space-y-3">
               <div className="space-y-2 pt-3">
                 <h4 className="font-semibold text-blue-200 text-sm uppercase tracking-wide">
