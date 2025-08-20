@@ -16,7 +16,7 @@ import SearchResults from "../components/SearchResults";
 import BoatCard from "../components/BoatCard";
 import StarRating from "../components/StarRating";
 const heroImgUrl = new URL(
-  "../../assets/Yachts blancs sur plan d'eau.jpg",
+  "../../assets/Yacht-charter-M-Y-ELTON_9.jpg",
   import.meta.url
 ).href;
 
