@@ -39,87 +39,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Informations */}
-          <div>
-            <h3 className="text-xl font-bold mb-6">INFORMATIONS</h3>
-            <div className="space-y-3">
-              <Link
-                to="/"
-                className="block hover:text-blue-300 transition-colors"
-              >
-                Accueil
-              </Link>
-              <Link
-                to="/bateaux"
-                className="block hover:text-blue-300 transition-colors"
-              >
-                Bateaux
-              </Link>
-              <Link
-                to="/a-propos"
-                className="block hover:text-blue-300 transition-colors"
-              >
-                À propos
-              </Link>
-              <Link
-                to="/contact"
-                className="block hover:text-blue-300 transition-colors"
-              >
-                Contact
-              </Link>
-              <Link
-                to="/mentions-legales"
-                className="block hover:text-blue-300 transition-colors"
-              >
-                Mentions légales
-              </Link>
-              <Link
-                to="/politique-confidentialite"
-                className="block hover:text-blue-300 transition-colors"
-              >
-                Politique de confidentialité
-              </Link>
-              <Link
-                to="/cgu-cgv"
-                className="block hover:text-blue-300 transition-colors"
-              >
-                CGU / CGV
-              </Link>
-              {userPrenom ? (
-                <>
-                  <Link
-                    to="/connexion"
-                    className="block hover:text-blue-300 transition-colors"
-                  >
-                    Connexion
-                  </Link>
-                  <Link
-                    to="/inscription"
-                    className="block hover:text-blue-300 transition-colors"
-                  >
-                    Inscription
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/connexion"
-                    className="block hover:text-blue-300 transition-colors"
-                  >
-                    Connexion
-                  </Link>
-                  <Link
-                    to="/inscription"
-                    className="block hover:text-blue-300 transition-colors"
-                  >
-                    Inscription
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Plan du site */}
+          {/* PLAN DU SITE - Colonne 1 */}
           <div>
             <h3 className="text-xl font-bold mb-6">PLAN DU SITE</h3>
             <div className="space-y-3">
@@ -188,7 +108,13 @@ export default function Footer() {
                   • Mes favoris
                 </Link>
               </div>
+            </div>
+          </div>
 
+          {/* PLAN DU SITE - Colonne 2 */}
+          <div>
+            <h3 className="text-xl font-bold mb-6">PLAN DU SITE</h3>
+            <div className="space-y-3">
               <div className="space-y-2 pt-3">
                 <h4 className="font-semibold text-blue-200 text-sm uppercase tracking-wide">
                   Gestion des bateaux
