@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Users, Euro, MapPin, Ship, Loader2, CheckCircle } from 'lucide-react';
+import BoatCalendar from '../components/BoatCalendar';
+import BookingConflictChecker from '../components/BookingConflictChecker';
+import AlertPopup from '../components/AlertPopup';
 
 export default function Reservation() {
   const { boatId } = useParams();
@@ -11,6 +14,14 @@ export default function Reservation() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [existingBookings, setExistingBookings] = useState([]);
+  const [alertPopup, setAlertPopup] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'error',
+    details: null
+  });
   
   const [reservationData, setReservationData] = useState({
     startDate: '',
@@ -45,6 +56,11 @@ export default function Reservation() {
 
       const data = await response.json();
       setBoat(data);
+      
+      // Récupérer les réservations existantes
+      if (data.existingBookings) {
+        setExistingBookings(data.existingBookings);
+      }
     } catch (error) {
       setError(error.message);
     } finally {
@@ -69,6 +85,18 @@ export default function Reservation() {
     setReservationData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleDateSelect = (startDate, endDate) => {
+    setReservationData(prev => ({
+      ...prev,
+      startDate: startDate || '',
+      endDate: endDate || ''
+    }));
+  };
+
+  const handleConflictDetected = (alertData) => {
+    setAlertPopup(alertData);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -88,6 +116,30 @@ export default function Reservation() {
     if (startDate < new Date()) {
       setError('La date de début ne peut pas être dans le passé');
       return;
+    }
+
+    // Vérifier les conflits de réservation
+    if (existingBookings && existingBookings.length > 0) {
+      const hasConflicts = existingBookings.some(booking => {
+        if (booking.status === 'cancelled') return false;
+        
+        const bookingStart = new Date(booking.startDate);
+        const bookingEnd = new Date(booking.endDate);
+        
+        // Réinitialiser l'heure pour la comparaison
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
+        bookingStart.setHours(0, 0, 0, 0);
+        bookingEnd.setHours(0, 0, 0, 0);
+        
+        // Vérifier s'il y a un chevauchement
+        return !(endDate <= bookingStart || startDate >= bookingEnd);
+      });
+      
+      if (hasConflicts) {
+        setError('La période sélectionnée chevauche des réservations existantes. Veuillez choisir une autre période.');
+        return;
+      }
     }
 
     try {
@@ -282,7 +334,32 @@ export default function Reservation() {
                   )}
                 </button>
               </form>
+
+              {/* Vérificateur de conflits */}
+              {reservationData.startDate && reservationData.endDate && (
+                <BookingConflictChecker
+                  startDate={reservationData.startDate}
+                  endDate={reservationData.endDate}
+                  boatAvailability={boat?.availability}
+                  existingBookings={existingBookings}
+                  onConflictDetected={handleConflictDetected}
+                />
+              )}
             </div>
+
+            {/* Calendrier de disponibilité */}
+            {boat && boat.availability && boat.availability.startDate && (
+              <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Calendrier de disponibilité</h3>
+                <BoatCalendar
+                  boatAvailability={boat.availability}
+                  existingBookings={existingBookings}
+                  onDateSelect={handleDateSelect}
+                  selectedStartDate={reservationData.startDate}
+                  selectedEndDate={reservationData.endDate}
+                />
+              </div>
+            )}
           </div>
 
           {/* Résumé de la réservation */}
@@ -314,6 +391,32 @@ export default function Reservation() {
                     <span>Capacité : {boat.capacite} personnes</span>
                   </div>
                 </div>
+
+                {/* Informations de disponibilité */}
+                {boat.availability && boat.availability.startDate && (
+                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                    <div className="flex items-center space-x-2 text-green-800 mb-2">
+                      <Calendar size={16} />
+                      <span className="font-medium text-sm">Disponibilité</span>
+                    </div>
+                    <div className="text-xs text-green-700 space-y-1">
+                      <div>
+                        Du {new Date(boat.availability.startDate).toLocaleDateString('fr-FR')}
+                      </div>
+                      <div>
+                        Au {new Date(boat.availability.endDate).toLocaleDateString('fr-FR')}
+                      </div>
+                      <div className="font-medium">
+                        Prix : {boat.availability.price}€ par jour
+                      </div>
+                      {boat.availability.notes && (
+                        <div className="italic">
+                          {boat.availability.notes}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Détails de la réservation */}
@@ -360,6 +463,16 @@ export default function Reservation() {
           </div>
         </div>
       </div>
+
+      {/* Popup d'alerte */}
+      <AlertPopup
+        isOpen={alertPopup.isOpen}
+        onClose={() => setAlertPopup({ ...alertPopup, isOpen: false })}
+        title={alertPopup.title}
+        message={alertPopup.message}
+        type={alertPopup.type}
+        details={alertPopup.details}
+      />
     </div>
   );
 }
