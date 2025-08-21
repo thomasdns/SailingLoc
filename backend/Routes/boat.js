@@ -42,8 +42,7 @@ router.get('/my-boats', protect, authorize('proprietaire', 'admin'), async (req,
 // GET /api/boats/:id - Récupérer un bateau spécifique
 router.get('/:id', async (req, res) => {
   try {
-    const boat = await Boat.findById(req.params.id)
-      .populate('proprietaire', 'nom prenom email');
+    const boat = await Boat.findById(req.params.id).populate('proprietaire', 'nom prenom email');
 
     if (!boat) {
       return res.status(404).json({ 

@@ -1,5 +1,8 @@
 // Middleware de validation du CAPTCHA
 export const validateCaptcha = (req, res, next) => {
+  if (process.env.NODE_ENV === 'test') {
+    return next();
+  }
   const { captchaQuestion, captchaAnswer, userAnswer } = req.body;
 
   // Vérifier que tous les champs CAPTCHA sont présents

@@ -2,14 +2,14 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
-import authRoutes from "./Routes/auth.js";
-import boatRoutes from "./Routes/boat.js";
-import bookingRoutes from "./Routes/bookings.js";
-import reviewRoutes from "./Routes/reviews.js";
-import contactRoutes from './Routes/contact.js';
-import userRoutes from './Routes/user.js';
-import paymentRoutes from './Routes/payment.js';
-import favoriteRoutes from './Routes/favorites.js';
+import authRoutes from "./routes/auth.js";
+import boatRoutes from "./routes/boat.js";
+import bookingRoutes from "./routes/bookings.js";
+import reviewRoutes from "./routes/reviews.js";
+import contactRoutes from './routes/contact.js';
+import userRoutes from './routes/user.js';
+import paymentRoutes from './routes/payment.js';
+import favoriteRoutes from './routes/favorites.js';
 
 dotenv.config();
  

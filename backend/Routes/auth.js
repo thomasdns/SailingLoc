@@ -31,33 +31,35 @@ router.post("/register", validateCaptcha, async (req, res) => {
       return res.status(400).json({ message: "Tous les champs sont requis." });
     }
 
-    // Validation du rôle
-    const validRoles = ['admin', 'client', 'proprietaire'];
-    const userRole = role || 'client'; // Rôle par défaut
+    // Validation du rôle (un utilisateur ne peut choisir que client ou proprietaire)
+    const validRoles = ['client', 'proprietaire'];
+    const userRole = role || 'client';
     if (!validRoles.includes(userRole)) {
-      return res.status(400).json({ message: 'Rôle invalide. Rôles autorisés: admin, client, proprietaire' });
+      return res.status(400).json({ message: 'Rôle invalide. Rôles autorisés: client, proprietaire' });
     }
 
-    // Validation SIRET et SIREN pour les propriétaires professionnels
-    if (userRole === 'proprietaire' && isProfessionnel) {
-      if (!siret || !siren) {
+    // Règles spécifiques au rôle proprietaire pour isProfessionnel / SIRET / SIREN
+    if (userRole === 'proprietaire') {
+      if (typeof isProfessionnel === 'undefined') {
         return res.status(400).json({ 
-          message: 'SIRET et SIREN sont obligatoires pour les propriétaires professionnels' 
+          message: 'Le champ isProfessionnel est requis pour un propriétaire (false pour un compte personnel, true pour un professionnel).'
         });
       }
-      
-      // Validation format SIRET (14 chiffres)
-      if (!/^\d{14}$/.test(siret)) {
-        return res.status(400).json({ 
-          message: 'Le SIRET doit contenir exactement 14 chiffres' 
-        });
+      if (typeof isProfessionnel !== 'boolean') {
+        return res.status(400).json({ message: 'Le champ isProfessionnel doit être un booléen.' });
       }
-      
-      // Validation format SIREN (9 chiffres)
-      if (!/^\d{9}$/.test(siren)) {
-        return res.status(400).json({ 
-          message: 'Le SIREN doit contenir exactement 9 chiffres' 
-        });
+      if (isProfessionnel) {
+        if (!siret || !siren) {
+          return res.status(400).json({ 
+            message: 'SIRET et SIREN sont obligatoires pour les propriétaires professionnels' 
+          });
+        }
+        if (!/^\d{14}$/.test(siret)) {
+          return res.status(400).json({ message: 'Le SIRET doit contenir exactement 14 chiffres' });
+        }
+        if (!/^\d{9}$/.test(siren)) {
+          return res.status(400).json({ message: 'Le SIREN doit contenir exactement 9 chiffres' });
+        }
       }
     }
 
@@ -76,7 +78,7 @@ router.post("/register", validateCaptcha, async (req, res) => {
       prenom,
       tel,
       role: userRole,
-      isProfessionnel: isProfessionnel || false,
+      isProfessionnel: userRole === 'proprietaire' ? Boolean(isProfessionnel) : false,
       ...(userRole === 'proprietaire' && isProfessionnel && { siret, siren })
     });
     await user.save();

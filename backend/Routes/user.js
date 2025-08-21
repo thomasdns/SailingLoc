@@ -10,11 +10,24 @@ const router = Router();
 router.put('/update', async (req, res) => {
   try {
     const { id, nom, prenom, email, telephone, password, siret, siren } = req.body;
+
+    // Charger l'utilisateur pour connaître son rôle/statut pro
+    const currentUser = await User.findById(id);
+    if (!currentUser) return res.status(404).json({ message: "Utilisateur non trouvé" });
+
     const updateFields = { nom, prenom, email, tel: telephone };
     
-    // Ajouter SIRET et SIREN si fournis
-    if (siret !== undefined) updateFields.siret = siret;
-    if (siren !== undefined) updateFields.siren = siren;
+    // Ajouter SIRET et SIREN seulement pour un propriétaire professionnel
+    // et uniquement si valeurs non vides (ne pas écraser si champs vides)
+    const isProOwner = currentUser.role === 'proprietaire' && currentUser.isProfessionnel === true;
+    if (isProOwner) {
+      if (siret !== undefined && String(siret).trim() !== '') {
+        updateFields.siret = siret;
+      }
+      if (siren !== undefined && String(siren).trim() !== '') {
+        updateFields.siren = siren;
+      }
+    }
     
     if (password && password.trim() !== '') {
       // Hash du mot de passe si modifié
@@ -25,7 +38,7 @@ router.put('/update', async (req, res) => {
     const user = await User.findByIdAndUpdate(
       id,
       updateFields,
-      { new: true }
+      { new: true, runValidators: true }
     );
     
     if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
@@ -51,7 +64,10 @@ router.put('/update', async (req, res) => {
 router.delete('/delete-account', protect, async (req, res) => {
   try {
     // Récupérer l'ID de l'utilisateur depuis le token JWT
-    const userId = req.user._id; // Changé de req.user.id à req.user._id
+    if (!req.user || !req.user._id) {
+      return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
+    const userId = req.user._id;
     
     if (!userId) {
       return res.status(401).json({ message: "Token d'authentification invalide" });
@@ -63,27 +79,31 @@ router.delete('/delete-account', protect, async (req, res) => {
       return res.status(404).json({ message: "Utilisateur non trouvé" });
     }
 
-    // Supprimer tous les bateaux appartenant à l'utilisateur
-    await Boat.deleteMany({ proprietaire: userId });
-    console.log(`Bateaux supprimés pour l'utilisateur ${userId}`);
+    // Récupérer les bateaux appartenant à l'utilisateur (pour supprimer réservations et avis liés)
+    const ownedBoats = await Boat.find({ proprietaire: userId }).select('_id');
+    const ownedBoatIds = ownedBoats.map(b => b._id);
 
-    // Supprimer toutes les réservations de l'utilisateur
+    // Supprimer toutes les réservations liées à l'utilisateur (en tant que locataire) OU à ses bateaux (en tant que propriétaire)
     await Booking.deleteMany({ 
       $or: [
-        { utilisateur: userId },
-        { proprietaire: userId }
+        { userId: userId },
+        { boatId: { $in: ownedBoatIds } }
       ]
     });
-    console.log(`Réservations supprimées pour l'utilisateur ${userId}`);
+    console.log(`Réservations supprimées pour l'utilisateur ${userId} et ses bateaux`);
 
     // Supprimer toutes les reviews de l'utilisateur
     await Review.deleteMany({ 
       $or: [
-        { utilisateur: userId },
-        { bateau: { $in: await Boat.find({ proprietaire: userId }).select('_id') } }
+        { userId: userId },
+        { boatId: { $in: ownedBoatIds } }
       ]
     });
-    console.log(`Reviews supprimées pour l'utilisateur ${userId}`);
+    console.log(`Reviews supprimées pour l'utilisateur ${userId} et ses bateaux`);
+
+    // Supprimer tous les bateaux appartenant à l'utilisateur (après avoir supprimé les dépendances)
+    await Boat.deleteMany({ proprietaire: userId });
+    console.log(`Bateaux supprimés pour l'utilisateur ${userId}`);
 
     // Supprimer l'utilisateur lui-même
     await User.findByIdAndDelete(userId);

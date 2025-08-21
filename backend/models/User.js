@@ -14,7 +14,8 @@ const userSchema = new mongoose.Schema({
   },
   isProfessionnel: {
     type: Boolean,
-    default: false
+    default: false,
+    required: function() { return this.role === 'proprietaire'; }
   },
   siret: { 
     type: String, 
