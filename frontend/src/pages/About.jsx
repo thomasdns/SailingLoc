@@ -38,7 +38,7 @@ export default function About() {
             À propos
           </h1>
           <p className="text-xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
-            Une question ? Écrivez-nous, on vous répond en et si bien !
+            Une question ? Écrivez-nous, nous vous répondons rapidement !
           </p>
         </div>
       </section>
@@ -84,8 +84,7 @@ export default function About() {
       <section className="py-16 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-lg text-gray-700 leading-relaxed">
-            Notre <strong>mission</strong> rendre la navigation <strong>accessible</strong>, <strong>simple</strong> et <strong>sécurisée</strong> 
-            pour tous les passionnés de mer.
+            Notre <strong>mission</strong> est de rendre la navigation <strong>accessible</strong>, <strong>simple</strong> et <strong>sécurisée</strong> pour tous les passionnés de mer.
           </p>
         </div>
       </section>
