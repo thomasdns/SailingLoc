@@ -318,11 +318,29 @@ router.get('/five-stars', async (req, res) => {
 // @access  Private/Admin
 router.get('/', protect, authorize('admin'), async (req, res) => {
   try {
-    const { page = 1, limit = 10, rating, boatId } = req.query;
+    const { page = 1, limit = 10, rating, boatId, userId, search } = req.query;
     
     let query = {};
-    if (rating) query.rating = parseInt(rating);
-    if (boatId) query.boatId = boatId;
+    
+    // Filtre par note
+    if (rating && rating !== 'all') {
+      query.rating = parseInt(rating);
+    }
+    
+    // Filtre par bateau
+    if (boatId && boatId !== 'all') {
+      query.boatId = boatId;
+    }
+    
+    // Filtre par utilisateur
+    if (userId && userId !== 'all') {
+      query.userId = userId;
+    }
+    
+    // Recherche textuelle dans les commentaires
+    if (search && search.trim() !== '') {
+      query.comment = { $regex: search, $options: 'i' };
+    }
 
     const skip = (page - 1) * limit;
     
@@ -339,11 +357,13 @@ router.get('/', protect, authorize('admin'), async (req, res) => {
       success: true,
       count: reviews.length,
       total,
+      reviews: reviews, // Changé de 'data' à 'reviews' pour correspondre au frontend
       pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / limit)
-      },
-      data: reviews
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalReviews: total,
+        reviewsPerPage: parseInt(limit)
+      }
     });
   } catch (error) {
     console.error('Erreur récupération avis admin:', error);
