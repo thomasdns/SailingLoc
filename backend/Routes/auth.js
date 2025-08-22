@@ -172,13 +172,6 @@ router.get("/dashboard", protect, authorize('admin'), async (req, res) => {
     // Récupérer les utilisateurs avec pagination et recherche
     const { page = 1, limit = 10, search = '', role = '', status = '' } = req.query;
     
-    // Debug: afficher les paramètres reçus
-    console.log('🔍 Backend - Paramètres reçus:', { page, limit, search, role, status });
-    
-    // Debug: vérifier le modèle User
-    console.log('🔍 Backend - Modèle User:', User ? 'Chargé' : 'Non chargé');
-    console.log('🔍 Backend - Schéma User:', User?.schema ? 'Défini' : 'Non défini');
-    
     // Construire le filtre de recherche
     let filter = {};
     
@@ -198,12 +191,8 @@ router.get("/dashboard", protect, authorize('admin'), async (req, res) => {
       filter.status = status;
     }
     
-    // Debug: afficher le filtre construit
-    console.log('🔍 Backend - Filtre construit:', filter);
-    
     // Compter le total d'utilisateurs avec les filtres
     const totalFilteredUsers = await User.countDocuments(filter);
-    console.log('🔍 Backend - Total d\'utilisateurs avec filtres:', totalFilteredUsers);
     
     // Récupérer les utilisateurs paginés
     const allUsers = await User.find(filter)
@@ -211,15 +200,6 @@ router.get("/dashboard", protect, authorize('admin'), async (req, res) => {
       .sort({ createdAt: -1 })
       .skip((parseInt(page) - 1) * parseInt(limit))
       .limit(parseInt(limit));
-    
-    console.log('🔍 Backend - Utilisateurs trouvés:', allUsers.length);
-    if (allUsers.length > 0) {
-      console.log('🔍 Backend - Premier utilisateur:', {
-        nom: allUsers[0].nom,
-        prenom: allUsers[0].prenom,
-        status: allUsers[0].status
-      });
-    }
 
     res.json({
       stats: {
