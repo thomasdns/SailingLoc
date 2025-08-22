@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import Header from '../components/header';
 import Footer from '../components/Footer';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { Trash2, AlertTriangle } from 'lucide-react';
+import { Trash2, AlertTriangle, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function Profil() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  
   // Préremplir depuis le localStorage si dispo (sinon vide)
   const [formData, setFormData] = useState({
     nom: localStorage.getItem('userNom') || '',
@@ -23,6 +26,28 @@ export default function Profil() {
   const [showPassword, setShowPassword] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  useEffect(() => {
+    checkAuthentication();
+  }, []);
+
+  const checkAuthentication = () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      
+      if (!token) {
+        setError('Vous devez être connecté pour voir votre profil');
+        setLoading(false);
+        return;
+      }
+
+      setLoading(false);
+    } catch (error) {
+      setError('Erreur lors de la vérification de l\'authentification');
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -163,6 +188,29 @@ export default function Profil() {
       setShowDeleteConfirm(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
+        <p className="mt-4 text-gray-600">Chargement du profil...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+        <p className="text-lg text-gray-800 mb-2">{error}</p>
+        <Link to="/connexion">
+          <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            Se connecter
+          </button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">

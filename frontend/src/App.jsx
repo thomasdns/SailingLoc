@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Favoris from "./pages/Favoris";
 import GestionBateaux from "./pages/GestionBateaux";
+import AjouterBateau from "./pages/AjouterBateau";
 import AdminDashboard from "./pages/AdminDashboard";
 import PolitiqueConfidentialite from "./pages/PolitiqueConfidentialite";
 import Profil from "./pages/Profil";
@@ -47,6 +48,7 @@ function App() {
             <Route path="/inscription" element={<Register />} />
             <Route path="/favoris" element={<Favoris />} />
             <Route path="/gestion-bateaux" element={<GestionBateaux />} />
+            <Route path="/ajouter-bateau" element={<AjouterBateau />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route
               path="/politique-confidentialite"
