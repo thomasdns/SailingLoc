@@ -1,6 +1,7 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import Boat from "../models/Boat.js";
 import { protect, authorize } from "../middleware/auth.js";
 import { validateCaptcha } from "../middleware/captcha.js";
 
@@ -92,22 +93,22 @@ router.post("/register", validateCaptcha, async (req, res) => {
           : "24h",
       }
     );
-    res.status(201).json({
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        nom: user.nom,
-        prenom: user.prenom,
-        tel: user.tel,
-        role: user.role,
-        isProfessionnel: user.isProfessionnel, // Ajout de isProfessionnel
-        ...(user.siret && { siret: user.siret }),
-        ...(user.siren && { siren: user.siren })
-      },
-    });
+         res.status(201).json({
+       token,
+       user: {
+         id: user._id,
+         email: user.email,
+         nom: user.nom,
+         prenom: user.prenom,
+         tel: user.tel,
+         role: user.role,
+         isProfessionnel: user.isProfessionnel,
+         status: user.status, // Ajouter le statut
+         ...(user.siret && { siret: user.siret }),
+         ...(user.siren && { siren: user.siren })
+       },
+     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Erreur serveur lors de l'inscription." });
   }
 });
@@ -154,7 +155,6 @@ router.post("/login", validateCaptcha, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -168,11 +168,37 @@ router.get("/dashboard", protect, authorize('admin'), async (req, res) => {
     const totalClients = await User.countDocuments({ role: 'client' });
     const totalProprietaires = await User.countDocuments({ role: 'proprietaire' });
 
-    // Récupérer les derniers utilisateurs
-    const recentUsers = await User.find()
-      .select('nom prenom email role isProfessionnel siret siren createdAt')
+    // Récupérer les utilisateurs avec pagination et recherche
+    const { page = 1, limit = 10, search = '', role = '', status = '' } = req.query;
+    
+    // Construire le filtre de recherche
+    let filter = {};
+    
+    if (search) {
+      filter.$or = [
+        { nom: { $regex: search, $options: 'i' } },
+        { prenom: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    if (role && role !== 'all') {
+      filter.role = role;
+    }
+    
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+    
+    // Compter le total d'utilisateurs avec les filtres
+    const totalFilteredUsers = await User.countDocuments(filter);
+    
+    // Récupérer les utilisateurs paginés
+    const allUsers = await User.find(filter)
+      .select('nom prenom email role isProfessionnel siret siren createdAt tel status')
       .sort({ createdAt: -1 })
-      .limit(10);
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .limit(parseInt(limit));
 
     res.json({
       stats: {
@@ -181,10 +207,15 @@ router.get("/dashboard", protect, authorize('admin'), async (req, res) => {
         totalClients,
         totalProprietaires
       },
-      recentUsers
+      allUsers,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalFilteredUsers / parseInt(limit)),
+        totalUsers: totalFilteredUsers,
+        usersPerPage: parseInt(limit)
+      }
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Erreur serveur lors de la récupération des données du dashboard." });
   }
 });
@@ -210,7 +241,6 @@ router.delete("/users/:userId", protect, authorize('admin'), async (req, res) =>
 
     res.json({ message: "Utilisateur supprimé avec succès." });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Erreur serveur lors de la suppression de l'utilisateur." });
   }
 });
@@ -283,23 +313,80 @@ router.put("/users/:userId", protect, authorize('admin'), async (req, res) => {
       { new: true, runValidators: true }
     );
 
+         res.json({
+       message: "Utilisateur modifié avec succès.",
+       user: {
+         id: updatedUser._id,
+         nom: updatedUser.nom,
+         prenom: updatedUser.prenom,
+         email: updatedUser.email,
+         tel: updatedUser.tel,
+         role: updatedUser.role,
+         isProfessionnel: updatedUser.isProfessionnel,
+         status: updatedUser.status, // Ajouter le statut
+         ...(updatedUser.siret && { siret: updatedUser.siret }),
+         ...(updatedUser.siren && { siren: updatedUser.siren })
+       }
+     });
+  } catch (error) {
+    res.status(500).json({ message: "Erreur serveur lors de la modification de l'utilisateur." });
+  }
+});
+
+// Récupérer les bateaux avec pagination et recherche - Route protégée
+router.get("/boats", protect, authorize('admin'), async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = '', type = '', status = '' } = req.query;
+    
+    // Construire le filtre de recherche
+    let filter = {};
+    
+    if (search) {
+      filter.$or = [
+        { nom: { $regex: new RegExp(search, 'i') } },
+        { type: { $regex: new RegExp(search, 'i') } }
+      ];
+    }
+    
+    if (type && type !== 'all') {
+      filter.type = type;
+    }
+    
+    if (status && status !== 'all') {
+      if (status === 'disponible') {
+        filter.disponible = true;
+      } else if (status === 'indisponible') {
+        filter.disponible = false;
+      } else if (status === 'loué') {
+        filter.disponible = false; // Un bateau loué n'est pas disponible
+      } else if (status === 'maintenance') {
+        filter.disponible = false; // Un bateau en maintenance n'est pas disponible
+      } else if (status === 'réservé') {
+        filter.disponible = false; // Un bateau réservé n'est pas disponible
+      }
+    }
+    
+    // Compter le total de bateaux avec les filtres
+    const totalBoats = await Boat.countDocuments(filter);
+    
+    // Récupérer les bateaux paginés
+    const boats = await Boat.find(filter)
+      .populate('proprietaire', 'nom prenom email')
+      .sort({ createdAt: -1 })
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .limit(parseInt(limit));
+    
     res.json({
-      message: "Utilisateur modifié avec succès.",
-      user: {
-        id: updatedUser._id,
-        nom: updatedUser.nom,
-        prenom: updatedUser.prenom,
-        email: updatedUser.email,
-        tel: updatedUser.tel,
-        role: updatedUser.role,
-        isProfessionnel: updatedUser.isProfessionnel,
-        ...(updatedUser.siret && { siret: updatedUser.siret }),
-        ...(updatedUser.siren && { siren: updatedUser.siren })
+      boats,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalBoats / parseInt(limit)),
+        totalBoats,
+        boatsPerPage: parseInt(limit)
       }
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Erreur serveur lors de la modification de l'utilisateur." });
+    res.status(500).json({ message: "Erreur serveur lors de la récupération des bateaux." });
   }
 });
 

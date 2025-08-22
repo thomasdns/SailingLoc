@@ -41,6 +41,11 @@ const userSchema = new mongoose.Schema({
       },
       message: 'Le SIREN doit contenir exactement 9 chiffres pour les professionnels'
     }
+  },
+  status: {
+    type: String,
+    enum: ['actif', 'inactif', 'suspendu'],
+    default: 'actif'
   }
 }, { timestamps: true });
 
