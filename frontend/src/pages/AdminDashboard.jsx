@@ -57,9 +57,31 @@ export default function AdminDashboard() {
     usersPerPage: 10
   });
 
+  // États pour la pagination et recherche des bateaux
+  const [boatsCurrentPage, setBoatsCurrentPage] = useState(1);
+  const [boatsPerPage] = useState(10);
+  const [boatsSearchTerm, setBoatsSearchTerm] = useState('');
+  const [boatsTypeFilter, setBoatsTypeFilter] = useState('all');
+  const [boatsStatusFilter, setBoatsStatusFilter] = useState('all');
+  const [boatsPagination, setBoatsPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalBoats: 0,
+    boatsPerPage: 10
+  });
+
   useEffect(() => {
     fetchDashboardData();
+    fetchBoatsData();
   }, []);
+
+  // Effet pour déclencher la recherche des bateaux quand les filtres changent
+  useEffect(() => {
+    if (boatsTypeFilter !== 'all' || boatsStatusFilter !== 'all') {
+      setBoatsCurrentPage(1);
+      fetchBoatsData();
+    }
+  }, [boatsTypeFilter, boatsStatusFilter]);
 
 
 
@@ -133,14 +155,6 @@ export default function AdminDashboard() {
       });
       
       // Debug: afficher les paramètres envoyés
-      console.log('🔍 Paramètres de recherche:', {
-        page: currentPage,
-        limit: usersPerPage,
-        search: searchTerm,
-        role: roleFilter,
-        status: statusFilter
-      });
-      console.log('🔗 URL complète:', `http://localhost:3001/api/auth/dashboard?${params}`);
 
       const response = await fetch(`http://localhost:3001/api/auth/dashboard?${params}`, {
         headers: {
@@ -161,12 +175,6 @@ export default function AdminDashboard() {
       const data = await response.json();
       
       // Debug: afficher la réponse de l'API
-      console.log('📡 Réponse API:', {
-        totalUsers: data.stats?.totalUsers,
-        usersFound: data.allUsers?.length,
-        pagination: data.pagination,
-        filters: { search: searchTerm, role: roleFilter, status: statusFilter }
-      });
       
       // Récupérer les vraies données des bateaux
       let boatsData = [];
@@ -181,12 +189,11 @@ export default function AdminDashboard() {
         if (boatsResponse.ok) {
           const boatsResult = await boatsResponse.json();
           boatsData = boatsResult || []; // L'API retourne directement le tableau
-          console.log(`Récupération de ${boatsData.length} bateaux depuis la base de données`);
         } else {
-          console.log('Erreur API bateaux:', boatsResponse.status, boatsResponse.statusText);
+          // Erreur API bateaux
         }
       } catch (error) {
-        console.log('API des bateaux non disponible:', error.message);
+        // API des bateaux non disponible
       }
 
       // Récupérer les vraies données des réservations
@@ -343,6 +350,59 @@ export default function AdminDashboard() {
     }
   };
 
+  // Fonction pour récupérer les bateaux avec pagination
+  const fetchBoatsData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        return;
+      }
+
+      const params = new URLSearchParams({
+        page: boatsCurrentPage.toString(),
+        limit: boatsPerPage.toString(),
+        search: boatsSearchTerm,
+        type: boatsTypeFilter,
+        status: boatsStatusFilter
+      });
+
+      const response = await fetch(`http://localhost:3001/api/auth/boats?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        setBoats(data.boats.map(boat => ({
+          id: boat._id,
+          nom: boat.nom,
+          type: boat.type,
+          longueur: boat.longueur,
+          capacite: boat.capacite,
+          prix: boat.prix_jour,
+          localisation: boat.localisation,
+          status: boat.disponible ? 'disponible' : 'indisponible',
+          image: boat.image,
+          createdAt: boat.createdAt,
+          proprietaire: boat.proprietaire
+        })));
+
+        if (data.pagination) {
+          setBoatsPagination(data.pagination);
+        }
+      } else {
+        toast.error('Erreur lors de la récupération des bateaux');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération des bateaux:', error);
+      toast.error('Erreur lors de la récupération des bateaux');
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userNom');
@@ -451,6 +511,30 @@ export default function AdminDashboard() {
         toast.error('Erreur lors du changement de filtre');
       });
     }
+  };
+
+  // Fonctions de pagination et de recherche pour les bateaux
+  const handleBoatsPageChange = (page) => {
+    setBoatsCurrentPage(page);
+    fetchBoatsData();
+  };
+
+  const handleBoatsSearch = () => {
+    setBoatsCurrentPage(1);
+    fetchBoatsData();
+  };
+
+  const handleBoatsFilterChange = () => {
+    setBoatsCurrentPage(1);
+    fetchBoatsData();
+  };
+
+  const handleBoatsClearFilters = () => {
+    setBoatsSearchTerm('');
+    setBoatsTypeFilter('all');
+    setBoatsStatusFilter('all');
+    setBoatsCurrentPage(1);
+    fetchBoatsData();
   };
 
   const handleClearFilters = () => {
@@ -955,70 +1039,69 @@ export default function AdminDashboard() {
                    </button>
                  </div>
 
-                 {/* Barre de recherche et filtres */}
-                 <div className="bg-white p-4 rounded-lg border mb-4">
-                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                     {/* Recherche */}
-                     <div>
-                       <label className="block text-sm font-medium text-gray-700 mb-2">Rechercher</label>
-                                               <input
+                                                                       {/* Barre de recherche et filtres */}
+                  <div className="bg-white p-4 rounded-lg border mb-4">
+                    <div className="flex items-end gap-4">
+                      {/* Recherche */}
+                      <div className="w-2/3">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Rechercher</label>
+                        <input
                           type="text"
                           placeholder="Nom, prénom ou email..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Appuyez sur Entrée ou cliquez sur Rechercher</p>
-                     </div>
-                     
-                     {/* Filtre par rôle */}
-                     <div>
-                       <label className="block text-sm font-medium text-gray-700 mb-2">Rôle</label>
-                       <select
-                         value={roleFilter}
-                         onChange={(e) => setRoleFilter(e.target.value)}
-                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       >
-                         <option value="all">Tous les rôles</option>
-                         <option value="client">Client</option>
-                         <option value="proprietaire">Propriétaire</option>
-                         <option value="admin">Admin</option>
-                       </select>
-                     </div>
-                     
-                     {/* Filtre par statut */}
-                     <div>
-                       <label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
-                       <select
-                         value={statusFilter}
-                         onChange={(e) => setStatusFilter(e.target.value)}
-                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       >
-                         <option value="all">Tous les statuts</option>
-                         <option value="actif">Actif</option>
-                         <option value="inactif">Inactif</option>
-                         <option value="suspendu">Suspendu</option>
-                       </select>
-                     </div>
-                     
-                     {/* Boutons d'action */}
-                     <div className="flex items-end space-x-2">
-                       <button
-                         onClick={handleSearch}
-                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                       >
-                         Rechercher
-                       </button>
-                       <button
-                         onClick={handleClearFilters}
-                         className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
-                       >
-                         Effacer
-                       </button>
-                     </div>
-                   </div>
-                 </div>
+                      </div>
+                      
+                      {/* Filtre par rôle */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Rôle</label>
+                        <select
+                          value={roleFilter}
+                          onChange={(e) => setRoleFilter(e.target.value)}
+                          className="w-36 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        >
+                          <option value="all">Tous</option>
+                          <option value="client">Client</option>
+                          <option value="proprietaire">Propriétaire</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </div>
+                      
+                      {/* Filtre par statut */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+                        <select
+                          value={statusFilter}
+                          onChange={(e) => setStatusFilter(e.target.value)}
+                          className="w-36 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        >
+                          <option value="all">Tous</option>
+                          <option value="actif">Actif</option>
+                          <option value="inactif">Inactif</option>
+                          <option value="suspendu">Suspendu</option>
+                        </select>
+                      </div>
+                      
+                      {/* Boutons d'action */}
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={handleSearch}
+                          className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                        >
+                          Rechercher
+                        </button>
+                        <button
+                          onClick={handleClearFilters}
+                          className="px-3 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm"
+                        >
+                          Effacer
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
@@ -1226,13 +1309,85 @@ export default function AdminDashboard() {
             {/* Boats Tab */}
             {activeTab === 'boats' && (
               <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Gestion des bateaux</h3>
-                  <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Ajouter un bateau
-                  </button>
-                </div>
+                                 <div className="flex justify-between items-center mb-4">
+                   <div>
+                     <h3 className="text-lg font-semibold text-gray-900">Gestion des bateaux</h3>
+                     <p className="text-sm text-gray-600 mt-1">
+                       Total : {boatsPagination.totalBoats} bateaux • Page {boatsPagination.currentPage} sur {boatsPagination.totalPages}
+                     </p>
+                   </div>
+                   <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                     <Plus className="h-4 w-4 mr-2" />
+                     Ajouter un bateau
+                   </button>
+                 </div>
+
+                                 {/* Barre de recherche et filtres pour les bateaux */}
+                 <div className="bg-white p-4 rounded-lg border mb-4">
+                   <div className="flex items-end gap-4">
+                     {/* Recherche */}
+                     <div className="w-2/3">
+                       <label className="block text-sm font-medium text-gray-700 mb-2">Rechercher</label>
+                       <input
+                         type="text"
+                         placeholder="Rechercher par nom ou type..."
+                         value={boatsSearchTerm}
+                         onChange={(e) => setBoatsSearchTerm(e.target.value)}
+                         onKeyPress={(e) => e.key === 'Enter' && handleBoatsSearch()}
+                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                       />
+                     </div>
+                     
+                     {/* Filtre par type */}
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                       <select
+                         value={boatsTypeFilter}
+                         onChange={(e) => setBoatsTypeFilter(e.target.value)}
+                         className="w-36 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                       >
+                         <option value="all">Tous</option>
+                         <option value="voilier">Voilier</option>
+                         <option value="moteur">Moteur</option>
+                         <option value="catamaran">Catamaran</option>
+                         <option value="yacht">Yacht</option>
+                         <option value="pneumatique">Pneumatique</option>
+                       </select>
+                     </div>
+                     
+                     {/* Filtre par statut */}
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+                       <select
+                         value={boatsStatusFilter}
+                         onChange={(e) => setBoatsStatusFilter(e.target.value)}
+                         className="w-36 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                       >
+                         <option value="all">Tous</option>
+                         <option value="disponible">Disponible</option>
+                         <option value="loué">Loué</option>
+                         <option value="maintenance">Maintenance</option>
+                         <option value="réservé">Réservé</option>
+                       </select>
+                     </div>
+                     
+                     {/* Boutons d'action */}
+                     <div className="flex space-x-2">
+                       <button
+                         onClick={handleBoatsSearch}
+                         className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                       >
+                         Rechercher
+                       </button>
+                       <button
+                         onClick={handleBoatsClearFilters}
+                         className="px-3 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm"
+                       >
+                         Effacer
+                       </button>
+                     </div>
+                   </div>
+                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
@@ -1318,6 +1473,85 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Pagination pour les bateaux */}
+                {boatsPagination.totalPages > 1 && (
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="text-sm text-gray-700">
+                      Affichage de {((boatsPagination.currentPage - 1) * boatsPagination.boatsPerPage) + 1} à{' '}
+                      {Math.min(boatsPagination.currentPage * boatsPagination.boatsPerPage, boatsPagination.totalBoats)} sur{' '}
+                      {boatsPagination.totalBoats} bateaux
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      {/* Bouton première page */}
+                      <button
+                        onClick={() => handleBoatsPageChange(1)}
+                        disabled={boatsPagination.currentPage === 1}
+                        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Première
+                      </button>
+                      
+                      {/* Bouton page précédente */}
+                      <button
+                        onClick={() => handleBoatsPageChange(boatsPagination.currentPage - 1)}
+                        disabled={boatsPagination.currentPage === 1}
+                        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Précédente
+                      </button>
+                      
+                      {/* Numéros de pages */}
+                      <div className="flex items-center space-x-1">
+                        {Array.from({ length: Math.min(5, boatsPagination.totalPages) }, (_, i) => {
+                          let pageNum;
+                          if (boatsPagination.totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (boatsPagination.currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (boatsPagination.currentPage >= boatsPagination.totalPages - 2) {
+                            pageNum = boatsPagination.totalPages - 4 + i;
+                          } else {
+                            pageNum = boatsPagination.currentPage - 2 + i;
+                          }
+                          
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => handleBoatsPageChange(pageNum)}
+                              className={`px-3 py-2 text-sm font-medium rounded-md ${
+                                pageNum === boatsPagination.currentPage
+                                  ? 'bg-blue-600 text-white'
+                                  : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      
+                      {/* Bouton page suivante */}
+                      <button
+                        onClick={() => handleBoatsPageChange(boatsPagination.currentPage + 1)}
+                        disabled={boatsPagination.currentPage === boatsPagination.totalPages}
+                        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Suivante
+                      </button>
+                      
+                      {/* Bouton dernière page */}
+                      <button
+                        onClick={() => handleBoatsPageChange(boatsPagination.totalPages)}
+                        disabled={boatsPagination.currentPage === boatsPagination.totalPages}
+                        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Dernière
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
