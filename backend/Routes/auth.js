@@ -92,20 +92,21 @@ router.post("/register", validateCaptcha, async (req, res) => {
           : "24h",
       }
     );
-    res.status(201).json({
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        nom: user.nom,
-        prenom: user.prenom,
-        tel: user.tel,
-        role: user.role,
-        isProfessionnel: user.isProfessionnel, // Ajout de isProfessionnel
-        ...(user.siret && { siret: user.siret }),
-        ...(user.siren && { siren: user.siren })
-      },
-    });
+         res.status(201).json({
+       token,
+       user: {
+         id: user._id,
+         email: user.email,
+         nom: user.nom,
+         prenom: user.prenom,
+         tel: user.tel,
+         role: user.role,
+         isProfessionnel: user.isProfessionnel,
+         status: user.status, // Ajouter le statut
+         ...(user.siret && { siret: user.siret }),
+         ...(user.siren && { siren: user.siren })
+       },
+     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Erreur serveur lors de l'inscription." });
@@ -168,11 +169,57 @@ router.get("/dashboard", protect, authorize('admin'), async (req, res) => {
     const totalClients = await User.countDocuments({ role: 'client' });
     const totalProprietaires = await User.countDocuments({ role: 'proprietaire' });
 
-    // Récupérer les derniers utilisateurs
-    const recentUsers = await User.find()
-      .select('nom prenom email role isProfessionnel siret siren createdAt')
+    // Récupérer les utilisateurs avec pagination et recherche
+    const { page = 1, limit = 10, search = '', role = '', status = '' } = req.query;
+    
+    // Debug: afficher les paramètres reçus
+    console.log('🔍 Backend - Paramètres reçus:', { page, limit, search, role, status });
+    
+    // Debug: vérifier le modèle User
+    console.log('🔍 Backend - Modèle User:', User ? 'Chargé' : 'Non chargé');
+    console.log('🔍 Backend - Schéma User:', User?.schema ? 'Défini' : 'Non défini');
+    
+    // Construire le filtre de recherche
+    let filter = {};
+    
+    if (search) {
+      filter.$or = [
+        { nom: { $regex: search, $options: 'i' } },
+        { prenom: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    if (role && role !== 'all') {
+      filter.role = role;
+    }
+    
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+    
+    // Debug: afficher le filtre construit
+    console.log('🔍 Backend - Filtre construit:', filter);
+    
+    // Compter le total d'utilisateurs avec les filtres
+    const totalFilteredUsers = await User.countDocuments(filter);
+    console.log('🔍 Backend - Total d\'utilisateurs avec filtres:', totalFilteredUsers);
+    
+    // Récupérer les utilisateurs paginés
+    const allUsers = await User.find(filter)
+      .select('nom prenom email role isProfessionnel siret siren createdAt tel status')
       .sort({ createdAt: -1 })
-      .limit(10);
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .limit(parseInt(limit));
+    
+    console.log('🔍 Backend - Utilisateurs trouvés:', allUsers.length);
+    if (allUsers.length > 0) {
+      console.log('🔍 Backend - Premier utilisateur:', {
+        nom: allUsers[0].nom,
+        prenom: allUsers[0].prenom,
+        status: allUsers[0].status
+      });
+    }
 
     res.json({
       stats: {
@@ -181,7 +228,13 @@ router.get("/dashboard", protect, authorize('admin'), async (req, res) => {
         totalClients,
         totalProprietaires
       },
-      recentUsers
+      allUsers,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalFilteredUsers / parseInt(limit)),
+        totalUsers: totalFilteredUsers,
+        usersPerPage: parseInt(limit)
+      }
     });
   } catch (error) {
     console.error(error);
@@ -283,20 +336,21 @@ router.put("/users/:userId", protect, authorize('admin'), async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    res.json({
-      message: "Utilisateur modifié avec succès.",
-      user: {
-        id: updatedUser._id,
-        nom: updatedUser.nom,
-        prenom: updatedUser.prenom,
-        email: updatedUser.email,
-        tel: updatedUser.tel,
-        role: updatedUser.role,
-        isProfessionnel: updatedUser.isProfessionnel,
-        ...(updatedUser.siret && { siret: updatedUser.siret }),
-        ...(updatedUser.siren && { siren: updatedUser.siren })
-      }
-    });
+         res.json({
+       message: "Utilisateur modifié avec succès.",
+       user: {
+         id: updatedUser._id,
+         nom: updatedUser.nom,
+         prenom: updatedUser.prenom,
+         email: updatedUser.email,
+         tel: updatedUser.tel,
+         role: updatedUser.role,
+         isProfessionnel: updatedUser.isProfessionnel,
+         status: updatedUser.status, // Ajouter le statut
+         ...(updatedUser.siret && { siret: updatedUser.siret }),
+         ...(updatedUser.siren && { siren: updatedUser.siren })
+       }
+     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Erreur serveur lors de la modification de l'utilisateur." });
