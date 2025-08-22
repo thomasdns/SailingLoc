@@ -70,9 +70,23 @@ export default function AdminDashboard() {
     boatsPerPage: 10
   });
 
+  // États pour la pagination et recherche des avis
+  const [reviewsCurrentPage, setReviewsCurrentPage] = useState(1);
+  const [reviewsPerPage] = useState(10);
+  const [reviewsSearchTerm, setReviewsSearchTerm] = useState('');
+  const [reviewsRatingFilter, setReviewsRatingFilter] = useState('all');
+  const [reviewsBoatFilter, setReviewsBoatFilter] = useState('all');
+  const [reviewsPagination, setReviewsPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalReviews: 0,
+    reviewsPerPage: 10
+  });
+
   useEffect(() => {
     fetchDashboardData();
     fetchBoatsData();
+    fetchReviewsData(); // Ajouter l'appel pour récupérer les avis
   }, []);
 
   // Effet pour déclencher la recherche des bateaux quand les filtres changent
@@ -133,6 +147,14 @@ export default function AdminDashboard() {
       }
     }
   }, [roleFilter, statusFilter]);
+
+  // Effet pour déclencher la recherche des avis quand les filtres changent
+  useEffect(() => {
+    if (reviewsRatingFilter !== 'all' || reviewsBoatFilter !== 'all') {
+      setReviewsCurrentPage(1);
+      fetchReviewsData();
+    }
+  }, [reviewsRatingFilter, reviewsBoatFilter]);
 
   const fetchDashboardData = async () => {
     try {
@@ -257,27 +279,6 @@ export default function AdminDashboard() {
         }
       }
 
-      // Récupérer tous les avis pour l'onglet Avis
-      let allReviews = [];
-      try {
-        const allReviewsResponse = await fetch('http://localhost:3001/api/reviews', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (allReviewsResponse.ok) {
-          const allReviewsResult = await allReviewsResponse.json();
-          allReviews = allReviewsResult.data || [];
-          console.log(`Récupération de ${allReviews.length} avis depuis la base de données`);
-        } else {
-          console.log('Erreur API avis:', allReviewsResponse.status, allReviewsResponse.statusText);
-        }
-      } catch (error) {
-        console.log('API des avis non disponible:', error.message);
-      }
-
       // Calculer les vraies statistiques
       const totalBoats = boatsData.length;
       const totalBookings = bookingsData.length;
@@ -333,15 +334,8 @@ export default function AdminDashboard() {
         reviewCount: boat.reviewCount
       })));
 
-      // Mettre à jour l'état des avis
-      setReviews(allReviews.map(review => ({
-        id: review._id,
-        userId: review.userId,
-        boatId: review.boatId,
-        rating: review.rating,
-        comment: review.comment,
-        createdAt: review.createdAt
-      })));
+      // Ne plus récupérer tous les avis ici car c'est fait par fetchReviewsData()
+      // setReviews sera mis à jour par fetchReviewsData()
     } catch (error) {
       toast.error('Erreur lors du chargement des données');
       console.error(error);
@@ -839,6 +833,124 @@ export default function AdminDashboard() {
         toast.error(error.message || 'Erreur lors de la suppression de l\'avis');
         console.error(error);
       }
+    }
+  };
+
+  // Fonction pour récupérer les avis avec pagination et filtres
+  const fetchReviewsData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        return;
+      }
+
+      const params = new URLSearchParams({
+        page: reviewsCurrentPage.toString(),
+        limit: reviewsPerPage.toString(),
+        search: reviewsSearchTerm,
+        rating: reviewsRatingFilter,
+        boatId: reviewsBoatFilter
+      });
+
+      console.log('Appel API avis avec paramètres:', params.toString());
+
+      const response = await fetch(`http://localhost:3001/api/reviews?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Réponse API avis:', data);
+        
+        setReviews(data.reviews.map(review => ({
+          id: review._id,
+          userId: review.userId,
+          boatId: review.boatId,
+          rating: review.rating,
+          comment: review.comment,
+          createdAt: review.createdAt
+        })));
+
+        if (data.pagination) {
+          setReviewsPagination(data.pagination);
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Erreur API avis:', response.status, errorData);
+        toast.error(`Erreur lors de la récupération des avis: ${errorData.message || response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Erreur réseau avis:', error);
+      toast.error('Erreur réseau lors de la récupération des avis');
+    }
+  };
+
+  // Fonction de recherche des avis
+  const handleReviewsSearch = () => {
+    setReviewsCurrentPage(1);
+    fetchReviewsData();
+  };
+
+  // Fonction de changement de page pour les avis
+  const handleReviewsPageChange = (page) => {
+    setReviewsCurrentPage(page);
+    fetchReviewsData();
+  };
+
+  // Fonction de changement de filtre pour les avis
+  const handleReviewsFilterChange = () => {
+    setReviewsCurrentPage(1);
+    fetchReviewsData();
+  };
+
+  // Fonction d'effacement des filtres pour les avis
+  const handleReviewsClearFilters = () => {
+    setReviewsSearchTerm('');
+    setReviewsRatingFilter('all');
+    setReviewsBoatFilter('all');
+    setReviewsCurrentPage(1);
+    
+    // Recharger immédiatement avec les filtres par défaut
+    const params = new URLSearchParams({
+      page: '1',
+      limit: '10',
+      search: '',
+      rating: 'all',
+      boatId: 'all'
+    });
+    
+    // Appeler directement l'API avec les paramètres par défaut
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch(`http://localhost:3001/api/reviews?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        setReviews(data.reviews.map(review => ({
+          id: review._id,
+          userId: review.userId,
+          boatId: review.boatId,
+          rating: review.rating,
+          comment: review.comment,
+          createdAt: review.createdAt
+        })));
+
+        if (data.pagination) {
+          setReviewsPagination(data.pagination);
+        }
+      })
+      .catch(error => {
+        console.error('Erreur lors de l\'effacement des filtres:', error);
+        toast.error('Erreur lors de l\'effacement des filtres');
+      });
     }
   };
 
@@ -1559,9 +1671,79 @@ export default function AdminDashboard() {
             {activeTab === 'reviews' && (
               <div>
                 <div className="flex justify-between items-center mb-4">
+                  <div>
                   <h3 className="text-lg font-semibold text-gray-900">Gestion des avis</h3>
-                  <div className="text-sm text-gray-500">
-                    Total : {reviews.length} avis
+                    <p className="text-sm text-gray-600 mt-1">
+                      Total : {reviewsPagination.totalReviews} avis • Page {reviewsPagination.currentPage} sur {reviewsPagination.totalPages}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Barre de recherche et filtres pour les avis */}
+                <div className="bg-white p-4 rounded-lg border mb-4">
+                  <div className="flex items-end gap-4">
+                    {/* Recherche */}
+                    <div className="w-2/3">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Rechercher</label>
+                      <input
+                        type="text"
+                        placeholder="Rechercher par commentaire..."
+                        value={reviewsSearchTerm}
+                        onChange={(e) => setReviewsSearchTerm(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleReviewsSearch()}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                    </div>
+                    
+                    {/* Filtre par note */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Note</label>
+                      <select
+                        value={reviewsRatingFilter}
+                        onChange={(e) => setReviewsRatingFilter(e.target.value)}
+                        className="w-36 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      >
+                        <option value="all">Toutes</option>
+                        <option value="5">5 étoiles</option>
+                        <option value="4">4 étoiles</option>
+                        <option value="3">3 étoiles</option>
+                        <option value="2">2 étoiles</option>
+                        <option value="1">1 étoile</option>
+                      </select>
+                    </div>
+                    
+                    {/* Filtre par bateau */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Bateau</label>
+                      <select
+                        value={reviewsBoatFilter}
+                        onChange={(e) => setReviewsBoatFilter(e.target.value)}
+                        className="w-36 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      >
+                        <option value="all">Tous</option>
+                        {boats.map(boat => (
+                          <option key={boat.id} value={boat.id}>
+                            {boat.nom}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    {/* Boutons d'action */}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={handleReviewsSearch}
+                        className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                      >
+                        Rechercher
+                      </button>
+                      <button
+                        onClick={handleReviewsClearFilters}
+                        className="px-3 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm"
+                      >
+                        Effacer
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
@@ -1569,7 +1751,7 @@ export default function AdminDashboard() {
                   <div className="text-center py-12">
                     <div className="text-gray-400 mb-4">
                       <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                       </svg>
                     </div>
                     <h4 className="text-lg font-medium text-gray-900 mb-2">Aucun avis disponible</h4>
@@ -1665,6 +1847,83 @@ export default function AdminDashboard() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+
+                {/* Pagination pour les avis */}
+                {reviewsPagination.totalPages > 1 && (
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="text-sm text-gray-700">
+                      Affichage de {((reviewsPagination.currentPage - 1) * reviewsPagination.reviewsPerPage) + 1} à{' '}
+                      {Math.min(reviewsPagination.currentPage * reviewsPagination.reviewsPerPage, reviewsPagination.totalReviews)} sur{' '}
+                      {reviewsPagination.totalReviews} avis
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      {/* Bouton première page */}
+                      <button
+                        onClick={() => handleReviewsPageChange(1)}
+                        disabled={reviewsPagination.currentPage === 1}
+                        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Première
+                      </button>
+                      
+                      {/* Bouton page précédente */}
+                      <button
+                        onClick={() => handleReviewsPageChange(reviewsPagination.currentPage - 1)}
+                        disabled={reviewsPagination.currentPage === 1}
+                        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:cursor-not-allowed"
+                      >
+                        Précédent
+                      </button>
+                      
+                      {/* Pages numérotées */}
+                      {Array.from({ length: Math.min(5, reviewsPagination.totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (reviewsPagination.totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (reviewsPagination.currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (reviewsPagination.currentPage >= reviewsPagination.totalPages - 2) {
+                          pageNum = reviewsPagination.totalPages - 4 + i;
+                        } else {
+                          pageNum = reviewsPagination.currentPage - 2 + i;
+                        }
+                        
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => handleReviewsPageChange(pageNum)}
+                            className={`relative inline-flex items-center px-4 py-2 text-sm font-medium border ${
+                              reviewsPagination.currentPage === pageNum
+                                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                      
+                      {/* Bouton page suivante */}
+                      <button
+                        onClick={() => handleReviewsPageChange(reviewsPagination.currentPage + 1)}
+                        disabled={reviewsPagination.currentPage === reviewsPagination.totalPages}
+                        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Suivant
+                      </button>
+                      
+                      {/* Bouton dernière page */}
+                      <button
+                        onClick={() => handleReviewsPageChange(reviewsPagination.totalPages)}
+                        disabled={reviewsPagination.currentPage === reviewsPagination.totalPages}
+                        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Dernière
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
