@@ -590,14 +590,14 @@ export default function Home() {
             {!isLoggedIn ? (
               <>
                 <Link
-                  to="/register"
+                  to="/inscription"
                   className="inline-flex items-center space-x-2 bg-white text-blue-600 px-8 py-3 rounded-full font-medium hover:bg-gray-50 transition-colors"
                 >
                   <UserPlus size={20} />
                   <span>S'inscrire</span>
                 </Link>
                 <Link
-                  to="/login"
+                  to="/connexion"
                   className="inline-flex items-center space-x-2 border-2 border-white text-white px-8 py-3 rounded-full font-medium hover:bg-white hover:text-blue-600 transition-colors"
                 >
                   <span>Se connecter</span>
