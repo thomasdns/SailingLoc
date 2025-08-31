@@ -457,10 +457,7 @@ export default function Home() {
                   key={review._id}
                   className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 relative overflow-hidden"
                 >
-                  {/* Badge 5 étoiles */}
-                  <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                    ⭐ 5 ÉTOILES
-                  </div>
+                  
 
                   {/* En-tête avec note */}
                   <div className="flex items-center justify-between mb-6">
