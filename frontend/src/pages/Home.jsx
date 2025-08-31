@@ -146,7 +146,7 @@ export default function Home() {
       );
 
       const response = await fetch(
-        "http://localhost:3001/api/reviews/five-stars?limit=6"
+        "http://localhost:3001/api/reviews/five-stars?limit=3"
       );
       console.log(
         "📡 Réponse API avis 5 étoiles:",
@@ -424,7 +424,7 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Ce que disent nos{" "}
-              <span className="text-blue-600">navigateurs</span> 5 étoiles
+              <span className="text-blue-600">navigateurs</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Découvrez les expériences exceptionnelles de nos clients les plus
@@ -495,15 +495,17 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Commentaire */}
-                  <div className="mb-6">
-                    <div className="flex items-start space-x-3">
-                      <MessageSquare className="h-6 w-6 text-blue-500 mt-1 flex-shrink-0" />
-                      <blockquote className="text-gray-700 leading-relaxed italic text-lg">
-                        "{review.comment}"
-                      </blockquote>
-                    </div>
-                  </div>
+                                     {/* Commentaire */}
+                   <div className="mb-6">
+                     <div className="flex items-start space-x-3">
+                       <MessageSquare className="h-6 w-6 text-blue-500 mt-1 flex-shrink-0" />
+                       <blockquote className="text-gray-700 leading-relaxed italic text-lg">
+                         "{review.comment}"
+                       </blockquote>
+                     </div>
+                   </div>
+
+                   
 
                   {/* Date et bateau */}
                   <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-100">

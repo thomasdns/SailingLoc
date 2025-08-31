@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Star, X, MessageSquare, Upload, Send } from 'lucide-react';
+import { Star, MessageSquare, Send, X } from 'lucide-react';
 
 export default function AddReview({ isOpen, onClose, onReviewAdded, boatData, bookingId }) {
   const [formData, setFormData] = useState({
     rating: 5,
-    comment: '',
-    images: []
+    comment: ''
   });
 
   const [loading, setLoading] = useState(false);
@@ -24,31 +23,7 @@ export default function AddReview({ isOpen, onClose, onReviewAdded, boatData, bo
     }));
   };
 
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length + formData.images.length > 5) {
-      setError('Maximum 5 images autorisées');
-      return;
-    }
 
-    const newImages = files.map(file => ({
-      name: file.name,
-      url: URL.createObjectURL(file),
-      file: file
-    }));
-
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, ...newImages]
-    }));
-  };
-
-  const removeImage = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -74,10 +49,6 @@ export default function AddReview({ isOpen, onClose, onReviewAdded, boatData, bo
         throw new Error('Vous devez être connecté');
       }
 
-      // Pour l'instant, on envoie juste les URLs des images
-      // En production, il faudrait uploader les images sur un service comme Firebase
-      const imageUrls = formData.images.map(img => img.url);
-
       const response = await fetch('http://localhost:3001/api/reviews', {
         method: 'POST',
         headers: {
@@ -88,8 +59,7 @@ export default function AddReview({ isOpen, onClose, onReviewAdded, boatData, bo
           boatId: boatData._id,
           bookingId: bookingId,
           rating: formData.rating,
-          comment: formData.comment.trim(),
-          images: imageUrls
+          comment: formData.comment.trim()
         })
       });
 
@@ -211,60 +181,7 @@ export default function AddReview({ isOpen, onClose, onReviewAdded, boatData, bo
             </p>
           </div>
 
-          {/* Upload d'images */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Ajouter des photos (optionnel)
-            </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600 mb-2">
-                Glissez-déposez vos photos ici ou cliquez pour sélectionner
-              </p>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                id="image-upload"
-              />
-              <label
-                htmlFor="image-upload"
-                className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
-              >
-                Sélectionner des photos
-              </label>
-              <p className="text-xs text-gray-500 mt-2">
-                Maximum 5 images (JPG, PNG, GIF, WebP)
-              </p>
-            </div>
 
-            {/* Aperçu des images */}
-            {formData.images.length > 0 && (
-              <div className="mt-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Images sélectionnées :</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {formData.images.map((image, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={image.url}
-                        alt={`Image ${index + 1}`}
-                        className="w-full h-24 object-cover rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
 
           {/* Boutons */}
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
