@@ -51,7 +51,7 @@ const BoatCalendar = ({ boatAvailability, existingBookings = [], onDateSelect, s
     return checkDate >= startDate && checkDate <= endDate;
   };
 
-  // Fonction pour vérifier si une date est réservée
+  // Fonction pour vérifier si une date est réservée (pending ou confirmed)
   const isDateBooked = (date) => {
     if (!existingBookings || existingBookings.length === 0) {
       return false;
@@ -61,6 +61,7 @@ const BoatCalendar = ({ boatAvailability, existingBookings = [], onDateSelect, s
     checkDate.setHours(0, 0, 0, 0);
     
     return existingBookings.some(booking => {
+      // Ignorer les réservations annulées
       if (booking.status === 'cancelled') return false;
       
       const bookingStart = new Date(booking.startDate);
@@ -137,9 +138,16 @@ const BoatCalendar = ({ boatAvailability, existingBookings = [], onDateSelect, s
     return checkDate.getTime() === endDate.getTime();
   };
 
-  // Fonction pour vérifier si une date est cliquable (disponible ET non réservée)
+  // Fonction pour vérifier si une date est cliquable (disponible ET non réservée ET pas dans le passé)
   const isDateClickable = (date) => {
-    return isDateInAvailability(date) && !isDateBooked(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    
+    // La date doit être disponible, non réservée, et pas dans le passé (mais accepter aujourd'hui)
+    return isDateInAvailability(date) && !isDateBooked(date) && checkDate >= today;
   };
 
   // Fonction pour gérer le clic sur une date
@@ -153,6 +161,18 @@ const BoatCalendar = ({ boatAvailability, existingBookings = [], onDateSelect, s
         message: 'Ces dates sont déjà réservées par un autre client.',
         type: 'error',
         details: { conflictingBookings }
+      });
+      return;
+    }
+
+    // Si la date n'est pas dans la disponibilité générale, afficher le popup
+    if (!isDateInAvailability(date)) {
+      setAlertPopup({
+        isOpen: true,
+        title: 'Période non disponible',
+        message: 'Cette date n\'est pas dans la disponibilité générale du bateau.',
+        type: 'error',
+        details: null
       });
       return;
     }

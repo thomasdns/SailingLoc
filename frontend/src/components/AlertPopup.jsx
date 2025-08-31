@@ -120,6 +120,41 @@ const AlertPopup = ({ isOpen, onClose, title, message, type = 'error', details =
             </div>
           )}
 
+          {/* Informations sur les périodes de disponibilité */}
+          {details && details.availabilityPeriods && details.availabilityPeriods.length > 0 && (
+            <div className="mb-4">
+              <h4 className={`font-medium text-sm ${getTextColor()} mb-2`}>
+                Disponibilité :
+              </h4>
+              <div className="space-y-2">
+                {details.availabilityPeriods.map((period, index) => (
+                  <div key={index} className="bg-white border border-gray-200 rounded p-3">
+                    <div className="text-sm text-gray-700">
+                      <div className="flex justify-between">
+                        <span>Du :</span>
+                        <span className="font-medium">
+                          {new Date(period.startDate).toLocaleDateString('fr-FR')}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Au :</span>
+                        <span className="font-medium">
+                          {new Date(period.endDate).toLocaleDateString('fr-FR')}
+                        </span>
+                      </div>
+                      <div className="flex justify-between mt-1">
+                        <span>Prix :</span>
+                        <span className="font-medium text-green-600">
+                          {period.price}€/jour
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Suggestions */}
           {type === 'error' && (
             <div className="bg-white border border-gray-200 rounded p-3">

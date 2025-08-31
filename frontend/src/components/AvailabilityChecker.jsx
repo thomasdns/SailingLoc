@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, CheckCircle, XCircle, AlertTriangle, Clock } from 'lucide-react';
+import AlertPopup from './AlertPopup';
 
 const AvailabilityChecker = ({ boatId, selectedStartDate, selectedEndDate, onAvailabilityChange }) => {
   const [availabilityPeriods, setAvailabilityPeriods] = useState([]);
@@ -7,6 +8,13 @@ const AvailabilityChecker = ({ boatId, selectedStartDate, selectedEndDate, onAva
   const [isAvailable, setIsAvailable] = useState(false);
   const [availabilityDetails, setAvailabilityDetails] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [alertPopup, setAlertPopup] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'error',
+    details: null
+  });
 
   useEffect(() => {
     if (boatId) {
@@ -20,6 +28,13 @@ const AvailabilityChecker = ({ boatId, selectedStartDate, selectedEndDate, onAva
     }
   }, [selectedStartDate, selectedEndDate, availabilityPeriods, existingBookings]);
 
+  // Vérifier la disponibilité dès qu'une date est sélectionnée
+  useEffect(() => {
+    if (selectedStartDate || selectedEndDate) {
+      checkAvailabilityImmediate();
+    }
+  }, [selectedStartDate, selectedEndDate]);
+
   const loadAvailabilityData = async () => {
     setLoading(true);
     try {
@@ -31,15 +46,47 @@ const AvailabilityChecker = ({ boatId, selectedStartDate, selectedEndDate, onAva
       }
 
       // Charger les réservations existantes
-      const bookingsResponse = await fetch(`http://localhost:3001/api/boats/${boatId}/bookings`);
+      const bookingsResponse = await fetch(`http://localhost:3001/api/bookings/boat/${boatId}`);
       if (bookingsResponse.ok) {
         const bookingsData = await bookingsResponse.json();
-        setExistingBookings(bookingsData);
+        if (bookingsData.success) {
+          setExistingBookings(bookingsData.data);
+        }
       }
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Vérification immédiate de la disponibilité (pour afficher le popup rapidement)
+  const checkAvailabilityImmediate = () => {
+    if (!selectedStartDate || !selectedEndDate || availabilityPeriods.length === 0) {
+      return;
+    }
+
+    const startDate = new Date(selectedStartDate);
+    const endDate = new Date(selectedEndDate);
+
+    // Vérifier si la période est dans une période de disponibilité
+    const matchingPeriod = availabilityPeriods.find(period => {
+      const periodStart = new Date(period.startDate);
+      const periodEnd = new Date(period.endDate);
+      return startDate >= periodStart && endDate <= periodEnd;
+    });
+
+    if (!matchingPeriod) {
+      // Afficher immédiatement le popup d'alerte
+      setAlertPopup({
+        isOpen: true,
+        title: 'Période non disponible',
+        message: 'La période sélectionnée n\'est pas dans la disponibilité générale du bateau.',
+        type: 'error',
+        details: {
+          availabilityPeriods: availabilityPeriods
+        }
+      });
     }
   };
 
@@ -53,24 +100,24 @@ const AvailabilityChecker = ({ boatId, selectedStartDate, selectedEndDate, onAva
     const startDate = new Date(selectedStartDate);
     const endDate = new Date(selectedEndDate);
 
-    // Vérifier que la date de fin est après la date de début
-    if (startDate >= endDate) {
+    // Vérifier que la date de fin est égale ou après la date de début (permet la réservation d'un seul jour)
+    if (startDate > endDate) {
       setIsAvailable(false);
       setAvailabilityDetails({
         available: false,
-        reason: 'La date de fin doit être après la date de début'
+        reason: 'La date de fin doit être égale ou postérieure à la date de début'
       });
       return;
     }
 
-    // Vérifier que les dates sont dans le futur
+    // Vérifier que les dates ne sont pas dans le passé (mais accepter aujourd'hui)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (startDate < today) {
       setIsAvailable(false);
       setAvailabilityDetails({
         available: false,
-        reason: 'Les dates de réservation doivent être dans le futur'
+        reason: 'Les dates de réservation ne peuvent pas être dans le passé'
       });
       return;
     }
@@ -91,8 +138,11 @@ const AvailabilityChecker = ({ boatId, selectedStartDate, selectedEndDate, onAva
       return;
     }
 
-    // Vérifier les conflits avec les réservations existantes
+    // Vérifier les conflits avec les réservations existantes (pending et confirmed)
     const hasConflict = existingBookings.some(booking => {
+      // Ignorer les réservations annulées
+      if (booking.status === 'cancelled') return false;
+      
       const bookingStart = new Date(booking.dateDebut);
       const bookingEnd = new Date(booking.dateFin);
       
@@ -109,8 +159,8 @@ const AvailabilityChecker = ({ boatId, selectedStartDate, selectedEndDate, onAva
       return;
     }
 
-    // Calculer le prix total
-    const duration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    // Calculer le prix total (minimum 1 jour pour les réservations d'un jour)
+    const duration = Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)));
     const totalPrice = duration * matchingPeriod.price;
 
     setIsAvailable(true);
@@ -140,6 +190,10 @@ const AvailabilityChecker = ({ boatId, selectedStartDate, selectedEndDate, onAva
       month: '2-digit',
       year: 'numeric'
     });
+  };
+
+  const closeAlertPopup = () => {
+    setAlertPopup({ ...alertPopup, isOpen: false });
   };
 
   if (loading) {
@@ -293,10 +347,20 @@ const AvailabilityChecker = ({ boatId, selectedStartDate, selectedEndDate, onAva
             <p>3. Si disponible, vous pouvez procéder à la réservation</p>
             <p>4. Les dates déjà réservées sont automatiquement exclues</p>
           </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+                 </div>
+       </div>
+
+       {/* Popup d'alerte */}
+       <AlertPopup
+         isOpen={alertPopup.isOpen}
+         onClose={closeAlertPopup}
+         title={alertPopup.title}
+         message={alertPopup.message}
+         type={alertPopup.type}
+         details={alertPopup.details}
+       />
+     </div>
+   );
+ };
 
 export default AvailabilityChecker;

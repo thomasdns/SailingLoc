@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Users, Euro, MapPin, Ship, Loader2, CheckCircle, Clock, XCircle, AlertCircle } from 'lucide-react';
-import AddReview from '../components/AddReview';
+import { Calendar, Users, Euro, MapPin, Ship, Loader2, Clock, XCircle, AlertCircle } from 'lucide-react';
 
 export default function MesReservations() {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [selectedReservation, setSelectedReservation] = useState(null);
 
   useEffect(() => {
     fetchReservations();
@@ -48,12 +45,6 @@ export default function MesReservations() {
 
   const getStatusInfo = (status) => {
     switch (status) {
-      case 'completed':
-        return {
-          icon: <CheckCircle size={20} className="text-green-600" />,
-          label: 'Terminée',
-          color: 'bg-green-100 text-green-800 border-green-200'
-        };
       case 'confirmed':
         return {
           icon: <Clock size={20} className="text-blue-600" />,
@@ -92,24 +83,17 @@ export default function MesReservations() {
   const calculateDuration = (startDate, endDate) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-    return days;
-  };
-
-  const handleAddReview = (reservation) => {
-    setSelectedReservation(reservation);
-    setShowReviewModal(true);
-  };
-
-  const handleReviewAdded = (review) => {
-    // Optionnel : mettre à jour l'interface pour indiquer que l'avis a été ajouté
-    setShowReviewModal(false);
-    setSelectedReservation(null);
-  };
-
-  const handleReviewModalClose = () => {
-    setShowReviewModal(false);
-    setSelectedReservation(null);
+    
+    // Réinitialiser l'heure pour la comparaison des dates
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    
+    const diffTime = end.getTime() - start.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    
+    // Une réservation d'un jour (même date) compte pour 1 jour
+    // Une réservation de plusieurs jours compte le nombre exact de jours
+    return Math.max(1, Math.ceil(diffDays));
   };
 
   if (loading) {
@@ -183,7 +167,7 @@ export default function MesReservations() {
         ) : (
           <>
             {/* Statistiques */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="flex items-center">
                   <div className="p-2 bg-blue-100 rounded-lg">
@@ -192,20 +176,6 @@ export default function MesReservations() {
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Total</p>
                     <p className="text-2xl font-bold text-gray-900">{reservations.length}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <CheckCircle className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Terminées</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {reservations.filter(r => r.status === 'completed').length}
-                    </p>
                   </div>
                 </div>
               </div>
@@ -302,15 +272,6 @@ export default function MesReservations() {
                           >
                             Voir le bateau
                           </Link>
-                          
-                          {reservation.status === 'completed' && (
-                            <button
-                              onClick={() => handleAddReview(reservation)}
-                              className="text-green-600 hover:text-green-700 text-sm font-medium"
-                            >
-                              Laisser un avis
-                            </button>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -323,15 +284,7 @@ export default function MesReservations() {
       </div>
 
       {/* Modal d'ajout d'avis */}
-      {selectedReservation && (
-        <AddReview
-          isOpen={showReviewModal}
-          onClose={handleReviewModalClose}
-          onReviewAdded={handleReviewAdded}
-          boatData={selectedReservation.boatId}
-          bookingId={selectedReservation._id}
-        />
-      )}
+      {/* The AddReview component is no longer used here as per the edit hint. */}
     </div>
   );
 }

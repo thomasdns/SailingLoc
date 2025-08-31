@@ -139,11 +139,10 @@ export default function AddBoat({ isOpen, onClose, onBoatAdded }) {
         destination: formData.destination,
         description: formData.description,
         equipements: formData.equipements,
-        // Inclure une seule disponibilité si elle existe
+        // Inclure une seule disponibilité si elle existe (sans prix)
         availability: availabilityPeriods.length > 0 ? {
           startDate: availabilityPeriods[0].startDate,
           endDate: availabilityPeriods[0].endDate,
-          price: parseFloat(availabilityPeriods[0].price),
           notes: availabilityPeriods[0].notes || ''
         } : null
       };

@@ -6,7 +6,6 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
   const [newPeriod, setNewPeriod] = useState({
     startDate: '',
     endDate: '',
-    price: '',
     notes: ''
   });
   const [isAddingPeriod, setIsAddingPeriod] = useState(false);
@@ -68,13 +67,8 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
       return;
     }
 
-    if (new Date(newPeriod.startDate) >= new Date(newPeriod.endDate)) {
-      setError('La date de fin doit être après la date de début');
-      return;
-    }
-
-    if (!newPeriod.price || newPeriod.price <= 0) {
-      setError('Veuillez entrer un prix valide');
+    if (new Date(newPeriod.startDate) > new Date(newPeriod.endDate)) {
+      setError('La date de fin doit être égale ou postérieure à la date de début');
       return;
     }
 
@@ -86,7 +80,7 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
       return;
     }
 
-    // Ajouter la nouvelle période
+    // Ajouter la nouvelle période (sans prix)
     const periodToAdd = {
       ...newPeriod,
       id: Date.now(), // ID temporaire
@@ -98,14 +92,8 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
 
     setAvailabilityPeriods([periodToAdd]);
     
-    // Réinitialiser le formulaire
-    setNewPeriod({
-      startDate: '',
-      endDate: '',
-      price: '',
-      notes: ''
-    });
-    setIsAddingPeriod(false);
+    // Garder le formulaire ouvert et la prévisualisation visible
+    // Ne pas réinitialiser le formulaire pour permettre de voir la prévisualisation
     setError('');
 
     // Notifier le composant parent
@@ -162,19 +150,18 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
     setEditingPeriod({
       startDate: period.startDate.split('T')[0],
       endDate: period.endDate.split('T')[0],
-      price: period.price,
       notes: period.notes || ''
     });
   };
 
   const handleSaveEdit = () => {
-    if (!editingPeriod.startDate || !editingPeriod.endDate || !editingPeriod.price) {
-      setError('Veuillez remplir tous les champs');
+    if (!editingPeriod.startDate || !editingPeriod.endDate) {
+      setError('Veuillez remplir toutes les dates');
       return;
     }
 
-    if (new Date(editingPeriod.startDate) >= new Date(editingPeriod.endDate)) {
-      setError('La date de fin doit être après la date de début');
+    if (new Date(editingPeriod.startDate) > new Date(editingPeriod.endDate)) {
+      setError('La date de fin doit être égale ou postérieure à la date de début');
       return;
     }
 
@@ -195,14 +182,13 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
       return;
     }
 
-    // Mettre à jour la période
+    // Mettre à jour la période (sans modifier le prix)
     const updatedPeriods = availabilityPeriods.map(period => {
       if (period.id === editingPeriodId || period._id === editingPeriodId) {
         return {
           ...period,
           startDate: editingPeriod.startDate,
           endDate: editingPeriod.endDate,
-          price: parseFloat(editingPeriod.price),
           notes: editingPeriod.notes
         };
       }
@@ -237,9 +223,17 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
   const calculateDuration = (startDate, endDate) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    
+    // Réinitialiser l'heure pour la comparaison des dates
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    
+    const diffTime = end.getTime() - start.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    
+    // Une réservation d'un jour (même date) compte pour 1 jour
+    // Une réservation de plusieurs jours compte le nombre exact de jours
+    return Math.max(1, Math.ceil(diffDays));
   };
 
   return (
@@ -266,7 +260,7 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
         <div className="bg-gray-50 rounded-lg p-4 mb-6">
           <h4 className="font-semibold text-gray-900 mb-4">Nouvelle période de disponibilité</h4>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Date de début *
@@ -295,20 +289,6 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Prix par jour (€) *
-              </label>
-              <input
-                type="number"
-                value={newPeriod.price}
-                onChange={(e) => setNewPeriod({...newPeriod, price: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                min="0"
-                step="0.01"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Notes
               </label>
               <input
@@ -320,6 +300,55 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
               />
             </div>
           </div>
+
+          {/* Prévisualisation de la disponibilité en cours de saisie */}
+          {(newPeriod.startDate || newPeriod.endDate) && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <h5 className="font-medium text-blue-900 mb-2 flex items-center">
+                {availabilityPeriods.length > 0 ? (
+                  <>
+                    <span className="text-green-600 mr-2">✅</span>
+                    Disponibilité confirmée et visible ci-dessous
+                  </>
+                ) : (
+                  <>
+                    <span className="text-blue-600 mr-2">👁️</span>
+                    Prévisualisation de la disponibilité
+                  </>
+                )}
+              </h5>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="text-blue-700 font-medium">Période :</span>
+                  <p className="text-blue-900">
+                    {newPeriod.startDate ? formatDate(newPeriod.startDate) : 'Non définie'} - {newPeriod.endDate ? formatDate(newPeriod.endDate) : 'Non définie'}
+                  </p>
+                  {newPeriod.startDate && newPeriod.endDate && (
+                    <span className="text-xs text-blue-600">
+                      {calculateDuration(newPeriod.startDate, newPeriod.endDate)} jours
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <span className="text-blue-700 font-medium">Notes :</span>
+                  <p className="text-blue-900">
+                    {newPeriod.notes || 'Aucune note'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-blue-700 font-medium">Statut :</span>
+                  <p className="text-blue-900">
+                    {availabilityPeriods.length > 0 ? '✅ Confirmée et visible' : '⏳ En cours de saisie'}
+                  </p>
+                </div>
+              </div>
+              {availabilityPeriods.length > 0 && (
+                <div className="mt-3 p-2 bg-green-100 border border-green-300 rounded text-green-800 text-xs">
+                  💡 La disponibilité a été confirmée ! Elle apparaît maintenant dans la section "Disponibilité actuelle" ci-dessous.
+                </div>
+              )}
+            </div>
+          )}
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
@@ -346,15 +375,33 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
                 setNewPeriod({
                   startDate: '',
                   endDate: '',
-                  price: '',
                   notes: ''
                 });
               }}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors flex items-center space-x-2"
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
             >
               <X className="h-4 w-4" />
               <span>Annuler</span>
             </button>
+
+            {/* Bouton pour fermer le formulaire après confirmation */}
+            {availabilityPeriods.length > 0 && (
+              <button
+                onClick={() => {
+                  setIsAddingPeriod(false);
+                  setError('');
+                  setNewPeriod({
+                    startDate: '',
+                    endDate: '',
+                    notes: ''
+                  });
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2"
+              >
+                <X className="h-4 w-4" />
+                <span>Fermer le formulaire</span>
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -362,14 +409,17 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
       {/* Affichage de la disponibilité existante */}
       {availabilityPeriods.length > 0 && (
         <div className="mb-6">
-          <h4 className="font-semibold text-gray-900 mb-4">Disponibilité actuelle</h4>
+          <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
+            <Calendar className="h-5 w-5 text-green-600 mr-2" />
+            Disponibilité actuelle
+          </h4>
           
           <div className="space-y-3">
             {availabilityPeriods.map((period, index) => (
-              <div key={period.id || period._id || index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div key={period.id || period._id || index} className="bg-green-50 border border-green-200 rounded-lg p-4">
                 {editingPeriodId === (period.id || period._id) ? (
                   // Mode édition
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
                       <input
@@ -391,18 +441,6 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Prix par jour (€)</label>
-                      <input
-                        type="number"
-                        value={editingPeriod.price}
-                        onChange={(e) => setEditingPeriod({...editingPeriod, price: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
-                    
-                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                       <input
                         type="text"
@@ -414,26 +452,21 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
                   </div>
                 ) : (
                   // Mode affichage
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-center">
                     <div>
-                      <span className="text-sm font-medium text-gray-500">Période</span>
-                      <p className="text-gray-900">
+                      <span className="text-sm font-medium text-green-700">Période</span>
+                      <p className="text-green-900 font-semibold">
                         {formatDate(period.startDate)} - {formatDate(period.endDate)}
                       </p>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-green-600">
                         {calculateDuration(period.startDate, period.endDate)} jours
                       </span>
                     </div>
                     
                     <div>
-                      <span className="text-sm font-medium text-gray-500">Prix par jour</span>
-                      <p className="text-lg font-semibold text-green-600">{period.price} €</p>
-                    </div>
-                    
-                    <div>
-                      <span className="text-sm font-medium text-gray-500">Prix total</span>
-                      <p className="text-lg font-semibold text-blue-600">
-                        {period.price * calculateDuration(period.startDate, period.endDate)} €
+                      <span className="text-sm font-medium text-green-700">Notes</span>
+                      <p className="text-green-900">
+                        {period.notes || 'Aucune note'}
                       </p>
                     </div>
                     
@@ -485,10 +518,10 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
 
       {/* Message si aucune disponibilité */}
       {availabilityPeriods.length === 0 && !isAddingPeriod && (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
           <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-          <p>Aucune disponibilité définie</p>
-          <p className="text-sm">Ajoutez une disponibilité pour permettre la réservation</p>
+          <p className="text-lg font-medium mb-2">Aucune disponibilité définie</p>
+          <p className="text-sm">Cliquez sur "Ajouter une disponibilité" pour commencer</p>
         </div>
       )}
 
@@ -500,6 +533,9 @@ const BoatAvailability = ({ boatId, existingPeriods = [], onAvailabilityChange, 
             <p className="font-medium mb-1">Gestion automatique des réservations</p>
             <p>Les clients ne pourront réserver que pendant les périodes de disponibilité définies. 
             Les dates déjà réservées seront automatiquement exclues des périodes disponibles.</p>
+            <p className="mt-2 text-xs italic">
+              💡 <strong>Conseil :</strong> Définissez vos disponibilités avant d'ajouter le bateau pour une meilleure visibilité.
+            </p>
           </div>
         </div>
       </div>

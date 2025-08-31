@@ -157,9 +157,9 @@ router.post('/', requireJsonContent, protect, authorize('proprietaire', 'admin')
 
     // Validation de la disponibilité si elle est fournie
     if (availability) {
-      if (!availability.startDate || !availability.endDate || !availability.price) {
+      if (!availability.startDate || !availability.endDate) {
         return res.status(400).json({ 
-          message: 'La disponibilité doit avoir startDate, endDate et price' 
+          message: 'La disponibilité doit avoir startDate et endDate' 
         });
       }
       
@@ -172,15 +172,9 @@ router.post('/', requireJsonContent, protect, authorize('proprietaire', 'admin')
         });
       }
       
-      if (startDate >= endDate) {
+      if (startDate > endDate) {
         return res.status(400).json({ 
-          message: 'La date de fin doit être après la date de début' 
-        });
-      }
-      
-      if (typeof availability.price !== 'number' || availability.price <= 0) {
-        return res.status(400).json({ 
-          message: 'Le prix de la disponibilité doit être un nombre positif' 
+          message: 'La date de fin doit être égale ou postérieure à la date de début' 
         });
       }
     }
@@ -355,9 +349,9 @@ router.put('/:id', requireJsonContent, protect, authorize('proprietaire', 'admin
 
     // Validation des disponibilités si elles sont fournies
     if (updateData.availability) {
-      if (!updateData.availability.startDate || !updateData.availability.endDate || !updateData.availability.price) {
+      if (!updateData.availability.startDate || !updateData.availability.endDate) {
         return res.status(400).json({ 
-          message: 'La disponibilité doit avoir startDate, endDate et price' 
+          message: 'La disponibilité doit avoir startDate et endDate' 
         });
       }
       
@@ -370,15 +364,9 @@ router.put('/:id', requireJsonContent, protect, authorize('proprietaire', 'admin
         });
       }
       
-      if (startDate >= endDate) {
+      if (startDate > endDate) {
         return res.status(400).json({ 
-          message: 'La date de fin doit être après la date de début' 
-        });
-      }
-      
-      if (typeof updateData.availability.price !== 'number' || updateData.availability.price <= 0) {
-        return res.status(400).json({ 
-          message: 'Le prix de la disponibilité doit être un nombre positif' 
+          message: 'La date de fin doit être égale ou postérieure à la date de début' 
         });
       }
     }
@@ -450,7 +438,7 @@ router.get('/:id/availability', async (req, res) => {
 router.post('/:id/availability', requireJsonContent, protect, authorize('proprietaire', 'admin'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { startDate, endDate, price, notes } = req.body;
+    const { startDate, endDate, notes } = req.body;
     
     // Vérifier que le bateau existe
     const boat = await Boat.findById(id);
@@ -464,9 +452,9 @@ router.post('/:id/availability', requireJsonContent, protect, authorize('proprie
     }
 
     // Validation des données
-    if (!startDate || !endDate || !price) {
+    if (!startDate || !endDate) {
       return res.status(400).json({ 
-        message: 'Les champs startDate, endDate et price sont obligatoires' 
+        message: 'Les champs startDate et endDate sont obligatoires' 
       });
     }
 
@@ -483,13 +471,8 @@ router.post('/:id/availability', requireJsonContent, protect, authorize('proprie
       return res.status(400).json({ message: 'La date de début doit être dans le futur' });
     }
     
-    if (end <= start) {
-      return res.status(400).json({ message: 'La date de fin doit être après la date de début' });
-    }
-
-    // Validation du prix
-    if (typeof price !== 'number' || price <= 0) {
-      return res.status(400).json({ message: 'Le prix doit être un nombre positif' });
+    if (end < start) {
+      return res.status(400).json({ message: 'La date de fin doit être égale ou postérieure à la date de début' });
     }
 
     // Vérifier les conflits avec les disponibilités existantes
@@ -504,12 +487,11 @@ router.post('/:id/availability', requireJsonContent, protect, authorize('proprie
       });
     }
 
-    // Créer la nouvelle période de disponibilité
+    // Créer la nouvelle période de disponibilité (sans prix)
     const availability = new Availability({
       boatId: id,
       startDate: start,
       endDate: end,
-      price,
       notes: notes || ''
     });
 

@@ -94,6 +94,22 @@ const BookingConflictChecker = ({ startDate, endDate, boatAvailability, existing
     });
   };
 
+  const calculateDuration = (startDate, endDate) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // Réinitialiser l'heure pour la comparaison des dates
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    
+    const diffTime = end.getTime() - start.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    
+    // Une réservation d'un jour (même date) compte pour 1 jour
+    // Une réservation de plusieurs jours compte le nombre exact de jours
+    return Math.max(1, Math.ceil(diffDays));
+  };
+
   const inAvailability = isInAvailability();
   const conflicts = hasConflicts();
   const conflictingBookings = getConflictingBookings();
@@ -159,7 +175,7 @@ const BookingConflictChecker = ({ startDate, endDate, boatAvailability, existing
         <div>Du : {new Date(startDate).toLocaleDateString('fr-FR')}</div>
         <div>Au : {new Date(endDate).toLocaleDateString('fr-FR')}</div>
         <div className="font-medium mt-1">
-          Durée : {Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24))} jours
+          Durée : {calculateDuration(startDate, endDate)} jours
         </div>
       </div>
     </div>

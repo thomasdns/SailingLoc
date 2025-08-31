@@ -16,7 +16,6 @@ const availabilitySchema = new mongoose.Schema({
   },
   price: {
     type: Number,
-    required: true,
     min: 0
   },
   notes: {
@@ -35,10 +34,10 @@ const availabilitySchema = new mongoose.Schema({
 availabilitySchema.index({ boatId: 1, startDate: 1, endDate: 1 });
 availabilitySchema.index({ startDate: 1, endDate: 1 });
 
-// Validation personnalisée pour s'assurer que endDate > startDate
+// Validation personnalisée pour s'assurer que endDate >= startDate (permet la réservation d'un seul jour)
 availabilitySchema.pre('validate', function(next) {
-  if (this.startDate && this.endDate && this.startDate >= this.endDate) {
-    next(new Error('La date de fin doit être après la date de début'));
+  if (this.startDate && this.endDate && this.startDate > this.endDate) {
+    next(new Error('La date de fin doit être égale ou postérieure à la date de début'));
   } else {
     next();
   }

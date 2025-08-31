@@ -14,6 +14,8 @@ export default function Footer() {
   const [email, setEmail] = useState("");
   const userPrenom =
     typeof window !== "undefined" ? localStorage.getItem("userPrenom") : null;
+  const userRole =
+    typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
 
   const handleNewsletterSubmit = (e) => {
     e.preventDefault();
@@ -95,12 +97,14 @@ export default function Footer() {
                 >
                   • Mon profil
                 </Link>
-                <Link
-                  to="/mes-reservations"
-                  className="block hover:text-blue-300 transition-colors text-sm"
-                >
-                  • Mes réservations
-                </Link>
+                {userRole !== 'proprietaire' && (
+                  <Link
+                    to="/mes-reservations"
+                    className="block hover:text-blue-300 transition-colors text-sm"
+                  >
+                    • Mes réservations
+                  </Link>
+                )}
                 <Link
                   to="/favoris"
                   className="block hover:text-blue-300 transition-colors text-sm"
@@ -124,6 +128,12 @@ export default function Footer() {
                   className="block hover:text-blue-300 transition-colors text-sm"
                 >
                   • Gérer mes bateaux
+                </Link>
+                <Link
+                  to="/gestion-reservations"
+                  className="block hover:text-blue-300 transition-colors text-sm"
+                >
+                  • Gérer mes réservations
                 </Link>
                 <Link
                   to="/ajouter-bateau"

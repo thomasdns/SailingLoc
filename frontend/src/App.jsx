@@ -19,6 +19,7 @@ import CGU_CGV from "./pages/CGU_CGV";
 import MentionsLegales from "./pages/MentionsLegales";
 import Reservation from "./pages/Reservation";
 import MesReservations from "./pages/MesReservations";
+import GestionReservations from "./pages/GestionReservations";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import CookieConsent from "./components/CookieConsent";
@@ -48,6 +49,7 @@ function App() {
             <Route path="/inscription" element={<Register />} />
             <Route path="/favoris" element={<Favoris />} />
             <Route path="/gestion-bateaux" element={<GestionBateaux />} />
+            <Route path="/gestion-reservations" element={<GestionReservations />} />
             <Route path="/ajouter-bateau" element={<AjouterBateau />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route

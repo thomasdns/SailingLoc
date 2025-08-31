@@ -35,8 +35,8 @@ export default function PaymentSuccess() {
           throw new Error(data.message || 'Échec de la confirmation du paiement.');
         }
 
-        setMessage('Paiement confirmé ! Redirection vers vos réservations...');
-        setTimeout(() => navigate('/mes-reservations'), 2000);
+        setMessage('Paiement confirmé ! Votre réservation est en attente de confirmation par le propriétaire.');
+        setTimeout(() => navigate('/mes-reservations'), 4000);
       } catch (e) {
         setError(e.message);
       }

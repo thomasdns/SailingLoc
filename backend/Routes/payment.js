@@ -23,12 +23,30 @@ router.post('/create-checkout-session', protect, async (req, res) => {
 
     const start = new Date(startDate);
     const end = new Date(endDate);
-    if (!(end > start)) return res.status(400).json({ message: 'Dates invalides' });
+    if (!(end >= start)) return res.status(400).json({ message: 'Dates invalides' });
 
-    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    const days = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
     const totalPrice = days * Number(boat.prix_jour);
     if (!Number.isFinite(totalPrice) || totalPrice < 1) {
       return res.status(400).json({ message: 'Prix total invalide' });
+    }
+
+    // Vérifier qu'il n'y a pas de conflit avec d'autres réservations (pending ou confirmed)
+    const conflictingBooking = await Booking.findOne({
+      boatId,
+      status: { $in: ['pending', 'confirmed'] },
+      $or: [
+        {
+          startDate: { $lte: new Date(endDate) },
+          endDate: { $gte: new Date(startDate) }
+        }
+      ]
+    });
+
+    if (conflictingBooking) {
+      return res.status(400).json({ 
+        message: 'Le bateau n\'est pas disponible pour ces dates. Une réservation est déjà en cours ou confirmée.' 
+      });
     }
 
     const booking = await Booking.create({
@@ -40,7 +58,7 @@ router.post('/create-checkout-session', protect, async (req, res) => {
       specialRequests,
       totalPrice,
       status: 'pending',
-      paymentStatus: 'pending'
+      paymentStatus: 'paid'
     });
 
     const successURL = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/payment/success?session_id={CHECKOUT_SESSION_ID}`;

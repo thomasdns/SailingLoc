@@ -49,6 +49,30 @@ const TestCalendar = () => {
     setSelectedEndDate(endDate);
   };
 
+  const handleDateChange = (field, value) => {
+    if (field === 'startDate') {
+      setSelectedStartDate(value);
+    } else if (field === 'endDate') {
+      setSelectedEndDate(value);
+    }
+  };
+
+  const calculateDuration = (startDate, endDate) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // Réinitialiser l'heure pour la comparaison des dates
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    
+    const diffTime = end.getTime() - start.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    
+    // Une réservation d'un jour (même date) compte pour 1 jour
+    // Une réservation de plusieurs jours compte le nombre exact de jours
+    return Math.max(1, Math.ceil(diffDays));
+  };
+
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">🧪 Test du Calendrier</h1>
@@ -108,10 +132,10 @@ const TestCalendar = () => {
                       Date de fin : {new Date(selectedEndDate).toLocaleDateString('fr-FR')}
                     </div>
                     <div>
-                      Durée : {Math.ceil((new Date(selectedEndDate) - new Date(selectedStartDate)) / (1000 * 60 * 60 * 24))} jours
+                      Durée : {calculateDuration(selectedStartDate, selectedEndDate)} jours
                     </div>
                     <div className="font-semibold">
-                      Prix total : {Math.ceil((new Date(selectedEndDate) - new Date(selectedStartDate)) / (1000 * 60 * 60 * 24)) * testBoatAvailability.price}€
+                      Prix total : {calculateDuration(selectedStartDate, selectedEndDate) * testBoatAvailability.price}€
                     </div>
                   </div>
                 </div>
