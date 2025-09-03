@@ -253,7 +253,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="border-t border-blue-800 mt-12 pt-8 text-center">
           <p className="text-blue-300 text-sm">
-            © 2024 SailingLoc. Tous droits réservés. |
+            © 2025 SailingLoc. Tous droits réservés. |
             <Link
               to="/mentions-legales"
               className="hover:text-white transition-colors ml-2"
