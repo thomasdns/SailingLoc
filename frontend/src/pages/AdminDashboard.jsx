@@ -11,7 +11,9 @@ export default function AdminDashboard() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditBoatModal, setShowEditBoatModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [editingBoat, setEditingBoat] = useState(null);
   const [viewingUser, setViewingUser] = useState(null);
   const [viewingBoat, setViewingBoat] = useState(null);
   const [showBoatReviewsModal, setShowBoatReviewsModal] = useState(false);
@@ -36,6 +38,17 @@ export default function AdminDashboard() {
     isProfessionnel: false,
     siret: '',
     siren: ''
+  });
+  const [editBoatFormData, setEditBoatFormData] = useState({
+    nom: '',
+    type: '',
+    longueur: '',
+    prix_jour: '',
+    capacite: '',
+    image: '',
+    destination: '',
+    description: '',
+    equipements: ''
   });
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -221,7 +234,7 @@ export default function AdminDashboard() {
       // Récupérer les vraies données des réservations
       let bookingsData = [];
       try {
-        const bookingsResponse = await fetch('http://localhost:3001/api/bookings', {
+        const bookingsResponse = await fetch('http://localhost:3001/api/bookings?limit=1000', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -230,7 +243,7 @@ export default function AdminDashboard() {
 
         if (bookingsResponse.ok) {
           const bookingsResult = await bookingsResponse.json();
-          bookingsData = bookingsResult.bookings || [];
+          bookingsData = bookingsResult.data || [];
           console.log(`Récupération de ${bookingsData.length} réservations depuis la base de données`);
         } else {
           console.log('Erreur API réservations:', bookingsResponse.status, bookingsResponse.statusText);
@@ -794,10 +807,97 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteBoat = (boatId) => {
+  const handleDeleteBoat = async (boatId) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce bateau ?')) {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          toast.error('Token d\'authentification manquant');
+          return;
+        }
+
+        const response = await fetch(`http://localhost:3001/api/boats/${boatId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Erreur lors de la suppression');
+        }
+
+        // Supprimer le bateau de la liste locale
       setBoats(boats.filter(boat => boat.id !== boatId));
       toast.success('Bateau supprimé avec succès');
+        
+        // Recharger les données du dashboard pour mettre à jour les statistiques
+        fetchDashboardData();
+      } catch (error) {
+        toast.error(error.message || 'Erreur lors de la suppression du bateau');
+        console.error(error);
+      }
+    }
+  };
+
+  const handleEditBoat = (boat) => {
+    setEditingBoat(boat);
+    setEditBoatFormData({
+      nom: boat.nom || '',
+      type: boat.type || '',
+      longueur: boat.longueur || '',
+      prix_jour: boat.prix || boat.prix_jour || '',
+      capacite: boat.capacite || '',
+      image: boat.image || '',
+      destination: boat.destination || boat.localisation || '',
+      description: boat.description || '',
+      equipements: boat.equipements || ''
+    });
+    setShowEditBoatModal(true);
+  };
+
+  const handleUpdateBoat = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Token d\'authentification manquant');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:3001/api/boats/${editingBoat.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(editBoatFormData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erreur lors de la modification');
+      }
+
+      const data = await response.json();
+      
+      // Mettre à jour le bateau dans la liste locale
+      setBoats(boats.map(boat => 
+        boat.id === editingBoat.id 
+          ? { ...boat, ...data }
+          : boat
+      ));
+
+      toast.success('Bateau modifié avec succès');
+      setShowEditBoatModal(false);
+      setEditingBoat(null);
+      
+      // Recharger les données du dashboard pour mettre à jour les statistiques
+      fetchDashboardData();
+    } catch (error) {
+      toast.error(error.message || 'Erreur lors de la modification du bateau');
+      console.error(error);
     }
   };
 
@@ -1569,12 +1669,17 @@ export default function AdminDashboard() {
                               >
                                 <Eye className="h-4 w-4" />
                               </button>
-                              <button className="text-indigo-600 hover:text-indigo-900">
+                              <button 
+                                onClick={() => handleEditBoat(boat)}
+                                className="text-indigo-600 hover:text-indigo-900"
+                                title="Modifier le bateau"
+                              >
                                 <Edit className="h-4 w-4" />
                               </button>
                               <button 
                                 onClick={() => handleDeleteBoat(boat.id)}
                                 className="text-red-600 hover:text-red-900"
+                                title="Supprimer le bateau"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
@@ -2536,6 +2641,193 @@ export default function AdminDashboard() {
                    Fermer
                  </button>
                </div>
+             </div>
+           </div>
+         )}
+
+         {/* Modal d'édition des bateaux */}
+         {showEditBoatModal && (
+           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+             <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+               <div className="flex justify-between items-center p-6 border-b border-gray-200">
+                 <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                   <Edit className="h-6 w-6 text-blue-600" />
+                   Modifier le bateau
+                 </h2>
+                 <button 
+                   onClick={() => setShowEditBoatModal(false)}
+                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                 >
+                   <X className="h-6 w-6 text-gray-500" />
+                 </button>
+               </div>
+
+               <form onSubmit={(e) => { e.preventDefault(); handleUpdateBoat(); }} className="p-6 space-y-6">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Nom du bateau *
+                     </label>
+                     <input
+                       type="text"
+                       value={editBoatFormData.nom}
+                       onChange={(e) => setEditBoatFormData({...editBoatFormData, nom: e.target.value})}
+                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="Nom du bateau"
+                       required
+                     />
+                   </div>
+
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Type *
+                     </label>
+                     <select
+                       value={editBoatFormData.type}
+                       onChange={(e) => setEditBoatFormData({...editBoatFormData, type: e.target.value})}
+                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       required
+                     >
+                       <option value="">Sélectionner un type</option>
+                       <option value="voilier">Voilier</option>
+                       <option value="yacht">Yacht</option>
+                       <option value="catamaran">Catamaran</option>
+                     </select>
+                   </div>
+
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Longueur (m) *
+                     </label>
+                     <input
+                       type="number"
+                       value={editBoatFormData.longueur}
+                       onChange={(e) => setEditBoatFormData({...editBoatFormData, longueur: parseFloat(e.target.value)})}
+                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="Longueur en mètres"
+                       min="2"
+                       max="100"
+                       step="0.1"
+                       required
+                     />
+                   </div>
+
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Prix par jour (€) *
+                     </label>
+                     <input
+                       type="number"
+                       value={editBoatFormData.prix_jour}
+                       onChange={(e) => setEditBoatFormData({...editBoatFormData, prix_jour: parseFloat(e.target.value)})}
+                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="Prix par jour"
+                       min="1"
+                       step="0.01"
+                       required
+                     />
+                   </div>
+
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Capacité (personnes) *
+                     </label>
+                     <input
+                       type="number"
+                       value={editBoatFormData.capacite}
+                       onChange={(e) => setEditBoatFormData({...editBoatFormData, capacite: parseInt(e.target.value)})}
+                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="Nombre de personnes"
+                       min="1"
+                       max="50"
+                       required
+                     />
+                   </div>
+
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Destination *
+                     </label>
+                     <select
+                       value={editBoatFormData.destination}
+                       onChange={(e) => setEditBoatFormData({...editBoatFormData, destination: e.target.value})}
+                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       required
+                     >
+                       <option value="">Sélectionner une destination</option>
+                       <option value="saint-malo">Saint-Malo</option>
+                       <option value="les-glenan">Les Glénan</option>
+                       <option value="crozon">Crozon</option>
+                       <option value="la-rochelle">La Rochelle</option>
+                       <option value="marseille">Marseille</option>
+                       <option value="cannes">Cannes</option>
+                       <option value="ajaccio">Ajaccio</option>
+                       <option value="barcelone">Barcelone</option>
+                       <option value="palma">Palma</option>
+                       <option value="athenes">Athènes</option>
+                       <option value="venise">Venise</option>
+                       <option value="amsterdam">Amsterdam</option>
+                       <option value="split">Split</option>
+                     </select>
+                   </div>
+                 </div>
+
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                     URL de l'image *
+                   </label>
+                   <input
+                     type="url"
+                     value={editBoatFormData.image}
+                     onChange={(e) => setEditBoatFormData({...editBoatFormData, image: e.target.value})}
+                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     placeholder="https://example.com/image.jpg"
+                     required
+                   />
+                 </div>
+
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                     Description
+                   </label>
+                   <textarea
+                     value={editBoatFormData.description}
+                     onChange={(e) => setEditBoatFormData({...editBoatFormData, description: e.target.value})}
+                     rows="3"
+                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     placeholder="Description du bateau"
+                   />
+                 </div>
+
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                     Équipements
+                   </label>
+                   <textarea
+                     value={editBoatFormData.equipements}
+                     onChange={(e) => setEditBoatFormData({...editBoatFormData, equipements: e.target.value})}
+                     rows="3"
+                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     placeholder="Équipements disponibles (séparés par des virgules)"
+                   />
+                 </div>
+
+                 <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                   <button
+                     type="button"
+                     onClick={() => setShowEditBoatModal(false)}
+                     className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                   >
+                     Annuler
+                   </button>
+                   <button
+                     type="submit"
+                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                   >
+                     Modifier le bateau
+                   </button>
+                 </div>
+               </form>
              </div>
            </div>
          )}
